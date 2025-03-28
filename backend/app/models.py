@@ -8,9 +8,15 @@ class User(BaseModel):
     fitness_level: str
     preferences: List[str]
 
-# Model for Workout
+# Model for Workouts
 class Workout(BaseModel):
-    workout_id: int
+    workout_type: str
+    workout_intensity: str
+    duration: int  # in minutes
+
+# Model for Exercises
+class Exercise(BaseModel):
+    exercise_id: int
     name: str
     description: str
     difficulty: str
