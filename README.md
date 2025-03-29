@@ -110,25 +110,7 @@ The system follows a client-server architecture where the frontend communicates 
 4. Open `http://localhost:3000` in your browser.
 
 #### **Backend (FastAPI)**
-1. Clone the repository:
-   ```bash
-   git clone <repo-url>
-   cd MyFitnessWebApp/backend
-   ```
-2. Create and activate a virtual environment:
-   ```bash
-   python -m venv venv
-   source venv/bin/activate  # Windows: venv\Scripts\activate
-   ```
-3. Install dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
-4. Run the FastAPI server:
-   ```bash
-   uvicorn app.main:app --reload
-   ```
-5. Open `http://localhost:8000/docs` to access the API documentation.
+ - check backend README
 
 ---
 

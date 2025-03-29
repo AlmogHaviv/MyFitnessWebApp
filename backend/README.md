@@ -36,18 +36,13 @@ uvicorn app.main:app --reload
 ## 5. Verify the API
 Open [http://localhost:8000/docs](http://localhost:8000/docs) to access the FastAPI documentation.
 
-## 6. Check MongoDB Data
-To verify if user data is stored in MongoDB, enter the running container:
-```bash
-docker exec -it mongodb mongosh
-```
-Then run:
-```js
-use workout_app
-show collections
- db.users.find().pretty()
-```
-This will list all users stored in the database.
+## 6.  Accessing MongoDB Data
+If you're using the remote MongoDB cluster, follow these steps to verify the data:
+
+Go to your MongoDB [Atlas dashboard](https://cloud.mongodb.com/v2/67e6b4e83a7e692ce4f84747#/overview).
+
+Navigate to your workout_app database enter the needed collection.
+
 
 Now you're ready to build and extend the backend! 🚀
 
