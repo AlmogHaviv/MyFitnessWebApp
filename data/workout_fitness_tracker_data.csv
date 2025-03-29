@@ -1,4 +1,4 @@
-User ID,Age,Gender,Height (cm),Weight (kg),Workout Type,Workout Duration (mins),Calories Burned,Heart Rate (bpm),Steps Taken,Distance (km),Workout Intensity,Sleep Hours,Water Intake (liters),Daily Calories Intake,Resting Heart Rate (bpm),VO2 Max,Body Fat (%),Mood Before Workout,Mood After Workout
+user_id,age,gender,height,weight,workout_type,workout_duration_in_minutes,calories_burned,heart_rate,steps_taken,distance_in_km,workout_intensity,sleep_hours,water_intake_in_liters,daily_calories_intake,resting_heart_rate,VO2_max,body_fat,mood_before_workout,mood_after_workout
 1,39,Male,175,99,Cycling,79,384,112,8850,14.44,High,8.2,1.9,3195,61,38.4,28.5,Tired,Fatigued
 2,36,Other,157,112,Cardio,73,612,168,2821,1.1,High,8.6,1.9,2541,73,38.4,28.5,Happy,Energized
 3,25,Female,180,66,HIIT,27,540,133,18898,7.28,High,9.8,1.9,3362,80,38.4,28.5,Happy,Fatigued
