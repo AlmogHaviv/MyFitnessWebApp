@@ -1,19 +1,17 @@
 from pydantic import BaseModel, Field
-from typing import List, Optional
+from typing import List, Optional, Dict
 from bson import ObjectId
 
 
-class User(BaseModel):
+class UserProfile(BaseModel):
     id: Optional[str] = Field(None, alias="_id")  # MongoDB's unique ID
     age: int
-    weight: int
-    height: int
-    name: str
     gender: str
-    workout_level: str
-    fitness_level: str
-    injuries: str
-    preferences: List[str]
+    height: int
+    daily_calories_intake: int
+    resting_heart_rate: int
+    VO2_max: float
+    body_fat: float
 
     class Config:
         validate_by_name = True  # Pydantic v2 replacement for allow_population_by_field_name
@@ -64,3 +62,14 @@ class WorkoutLog(BaseModel):
     class Config:
         validate_by_name = True
         json_encoders = {ObjectId: str}  # Convert ObjectId to string
+
+
+class SimilarUsersResponse(BaseModel):
+    distances: List[float]
+    id_numbers: List[int]
+    similar_users: List[Dict]
+
+
+class WorkoutRecommendation(BaseModel):
+    recommended_workouts: List[Dict]
+    confidence_score: float 

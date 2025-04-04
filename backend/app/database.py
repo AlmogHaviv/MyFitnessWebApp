@@ -21,3 +21,5 @@ async def test_connection():
         print("Pinged your deployment. You successfully connected to MongoDB!")
     except Exception as e:
         print(f"Failed to connect to MongoDB: {e}")
+
+
