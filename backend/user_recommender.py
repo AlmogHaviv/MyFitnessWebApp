@@ -69,18 +69,16 @@ class UserRecommender:
         return distances.flatten(), similar_user_ids
 
     def save_model(self):
-        """Save the trained model and preprocessing tools."""
-        if not os.path.exists("backend/models"):
-            os.makedirs("backend/models")
-        
-        joblib.dump(self.model, "backend/models/user_recommender_model.joblib")
-        joblib.dump(self.scaler, "backend/models/scaler.pkl")
-        joblib.dump(self.label_encoder, "backend/models/label_encoder.pkl")
+        """Save the trained model and preprocessing objects."""
+        os.makedirs('backend/models', exist_ok=True)
+        joblib.dump(self.model, 'backend/models/user_recommender_model.joblib')
+        joblib.dump(self.scaler, 'backend/models/scaler.joblib')
+        joblib.dump(self.label_encoder, 'backend/models/label_encoder.joblib')
         joblib.dump(self.user_ids, "backend/models/user_ids.pkl")  # <-- Save user_ids
 
-    def load_model(self, model_path="backend/models/user_recommender_model.joblib"):
-        """Load the trained model and preprocessing tools."""
-        self.model = joblib.load(model_path)
-        self.scaler = joblib.load("backend/models/scaler.pkl")
-        self.label_encoder = joblib.load("backend/models/label_encoder.pkl")
-        self.user_ids = joblib.load("backend/models/user_ids.pkl")  # <-- Load user_ids
+    def load_model(self):
+        """Load the trained model and preprocessing objects."""
+        self.model = joblib.load('backend/models/user_recommender_model.joblib')
+        self.scaler = joblib.load('backend/models/scaler.joblib')
+        self.label_encoder = joblib.load('backend/models/label_encoder.joblib')
+        self.user_ids = joblib.load('backend/models/user_ids.pkl')

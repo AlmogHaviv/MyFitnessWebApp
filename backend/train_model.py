@@ -2,7 +2,8 @@ import pandas as pd
 import logging
 from user_recommender import UserRecommender
 import random
-
+import os
+import time
 # Set up logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -102,7 +103,9 @@ def train_and_save_model():
 
         # Training the model
         logger.info("Training model...")
-        recommender.train('data/workout_fitness_tracker_data.csv')
+        # Get the absolute path to the project root directory
+        csv_path = os.path.join('data', 'workout_fitness_tracker_data.csv')
+        recommender.train(csv_path)
 
         # Save the model after training
         recommender.save_model()
@@ -146,5 +149,47 @@ def train_and_save_model():
         raise
 
 
+def test_loaded_model():
+    """Test that the saved model can be loaded and used correctly."""
+    try:
+        logger.info("\nTesting saved model...")
+        test_recommender = UserRecommender()
+        test_recommender.load_model()
+        logger.info("Model loaded successfully!")
+
+        # Test with the same user profile
+        test_profile = {
+            'age': 25,
+            'full_name': 'John Smith',
+            'id_number': 207298720,
+            'gender': 'Male',
+            'height': 180,
+            'weight': 70,
+            'daily_calories_intake': 2500,
+            'resting_heart_rate': 65,
+            'VO2_max': 45,
+            'body_fat': 15
+        }
+
+        logger.info("Testing inference with loaded model...")
+        distances, id_numbers = test_recommender.find_similar_users(test_profile)
+        
+        logger.info("Model test results:")
+        logger.info(f"Found {len(distances)} similar users")
+        logger.info(f"Distances: {distances[:5]}")  # Show first 5 distances
+        logger.info(f"User IDs: {id_numbers[:5]}")  # Show first 5 IDs
+        
+        return True
+
+    except Exception as e:
+        logger.error(f"Error testing loaded model: {e}")
+        return False
+
+
 if __name__ == "__main__":
     train_and_save_model()
+    # Add a pause between training and testing
+    logger.info("\nWaiting a moment before testing loaded model...")
+    time.sleep(2)
+    # Test the loaded model
+    test_loaded_model()

@@ -4,10 +4,12 @@ from bson import ObjectId
 
 
 class UserProfile(BaseModel):
-    id: Optional[str] = Field(None, alias="_id")  # MongoDB's unique ID
     age: int
+    full_name: str
+    id_number: int 
     gender: str
     height: int
+    weight: int
     daily_calories_intake: int
     resting_heart_rate: int
     VO2_max: float
