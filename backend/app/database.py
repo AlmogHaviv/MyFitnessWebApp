@@ -3,14 +3,14 @@ from pymongo.server_api import ServerApi
 import pandas as pd
 import os
 
-# MongoDB URI (make sure to replace <db_password> with your actual password)
+# MongoDB URI
 uri = "mongodb+srv://almoghaviv:almoghaviv@workoutapp.e0r5zoq.mongodb.net/?retryWrites=true&w=majority&appName=workoutApp"
 
 # Create a new asynchronous client and connect to the server
 client = AsyncIOMotorClient(uri, server_api=ServerApi('1'))
 
 # Define the database and collection
-db = client.workoutApp 
+db = client.workoutApp
 users_collection = db.users
 
 # Get the absolute path to the project root directory
