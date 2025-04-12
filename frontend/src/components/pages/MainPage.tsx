@@ -17,7 +17,7 @@ import {
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import CloseIcon from '@mui/icons-material/Close';
 import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
-import { getSimilarUsers, getWorkoutRecommendations } from '../../services/api';
+import { getSimilarUsers } from '../../services/api';
 import '../../styles/App.css';
 
 interface Buddy {
@@ -51,21 +51,19 @@ const MainPage: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const userId = localStorage.getItem('userId');
-        if (!userId) {
-          // If no user ID is found, redirect to landing page
+        // Get the full user data from localStorage instead of just the ID
+        const userDataString = localStorage.getItem('userData');
+        if (!userDataString) {
           navigate('/');
           return;
         }
 
-        // Fetch similar users and recommendations
-        const [similarUsers, workoutRecommendations] = await Promise.all([
-          getSimilarUsers(Number(userId)),
-          getWorkoutRecommendations(Number(userId))
-        ]);
-
-        setBuddies(similarUsers.similar_users);
-        setRecommendations(workoutRecommendations.recommended_workouts);
+        const userData = JSON.parse(userDataString);
+        
+        // Fetch similar users using the full user profile
+        const similarUsersResponse = await getSimilarUsers(userData);
+        setBuddies(similarUsersResponse.similar_users);
+        
       } catch (err) {
         setError(err instanceof Error ? err.message : 'An error occurred while fetching data');
       } finally {

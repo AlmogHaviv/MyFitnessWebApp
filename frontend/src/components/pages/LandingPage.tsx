@@ -31,6 +31,7 @@ interface UserProfile {
   resting_heart_rate: number;
   VO2_max: number;
   body_fat: number;
+  [key: string]: string | number;
 }
 
 const LandingPage: React.FC = () => {
@@ -56,20 +57,57 @@ const LandingPage: React.FC = () => {
     setError(null);
 
     try {
-      // Validate form data
-      if (!formData.full_name || !formData.id_number || !formData.gender) {
-        throw new Error('Please fill in all required fields');
+      // Validate all required fields first
+      const requiredFields = [
+        'full_name',
+        'age',
+        'id_number',
+        'gender',
+        'height',
+        'weight',
+        'daily_calories_intake',
+        'resting_heart_rate',
+        'VO2_max',
+        'body_fat'
+      ] as const;
+      
+      for (const field of requiredFields) {
+        if (formData[field] === undefined || formData[field] === '') {
+          throw new Error(`${field.replace('_', ' ')} is required`);
+        }
       }
 
+      // Convert and validate data types
+      const formDataToSubmit = {
+        full_name: formData.full_name.trim(),
+        age: Math.floor(Number(formData.age)),
+        id_number: Math.floor(Number(formData.id_number)),
+        gender: formData.gender,
+        height: Math.floor(Number(formData.height)),
+        weight: Math.floor(Number(formData.weight)),
+        daily_calories_intake: Math.floor(Number(formData.daily_calories_intake)),
+        resting_heart_rate: Math.floor(Number(formData.resting_heart_rate)),
+        VO2_max: Number(formData.VO2_max),
+        body_fat: Number(formData.body_fat)
+      };
+
+      // Update gender validation to match your MenuItem values
+      if (!['Male', 'Female', 'Other'].includes(formDataToSubmit.gender)) {
+        throw new Error('Invalid gender value');
+      }
+
+      console.log('Submitting data:', formDataToSubmit); // Debug log
+
       // Send data to backend
-      const response = await createUserProfile(formData);
+      const response = await createUserProfile(formDataToSubmit);
       
-      // Store user ID in localStorage for future use
-      localStorage.setItem('userId', response.id_number.toString());
+      // Store user data in localStorage
+      localStorage.setItem('userData', JSON.stringify(formDataToSubmit));
       
       // Navigate to main page
       navigate('/main');
     } catch (err) {
+      console.error('Submission error:', err); // Debug log
       setError(err instanceof Error ? err.message : 'An error occurred while creating your profile');
     } finally {
       setLoading(false);
@@ -154,9 +192,9 @@ const LandingPage: React.FC = () => {
                   onChange={handleSelectChange}
                   required
                 >
-                  <MenuItem value="male">Male</MenuItem>
-                  <MenuItem value="female">Female</MenuItem>
-                  <MenuItem value="other">Other</MenuItem>
+                  <MenuItem value="Male">Male</MenuItem>
+                  <MenuItem value="Female">Female</MenuItem>
+                  <MenuItem value="Other">Other</MenuItem>
                 </Select>
               </FormControl>
             </Grid>
