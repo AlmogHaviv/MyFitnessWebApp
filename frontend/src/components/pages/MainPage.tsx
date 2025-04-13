@@ -116,15 +116,16 @@ const MainPage: React.FC = () => {
 
   return (
     <Container sx={{ mt: 4 }}>
-      <Box textAlign="center" mb={4}>
-        <FitnessCenterIcon sx={{ fontSize: 80, color: 'primary.main' }} />
-        <Typography variant="h3" gutterBottom>
-          Gymnder
+      <Box className="landing-header">
+        <FitnessCenterIcon className="landing-icon" />
+        <Typography className="landing-title">
+          Gymder
         </Typography>
-        <Typography variant="h6" color="text.secondary">
-          Find your new workout buddy!
+        <Typography className="landing-subtitle">
+          Find your perfect workout buddy
         </Typography>
       </Box>
+
 
       {/* Buddy Card or No Matches Message */}
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
@@ -146,8 +147,8 @@ const MainPage: React.FC = () => {
             <CardMedia
               component="img"
               sx={{
-                height: { xs: 300, sm: 400 }, // Square for mobile, smaller for larger screens
-                width: { xs: 300, sm: 400 }, // Square for mobile, smaller for larger screens
+                height: { xs: 320, sm: 400 }, // Square for mobile, smaller for larger screens
+                width: { xs: 320, sm: 400 }, // Square for mobile, smaller for larger screens
                 objectFit: 'cover',
                 borderRadius: '15px', // Matching rounded corners
                 mb: { xs: 2, sm: 0 }, // Margin bottom for mobile

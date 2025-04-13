@@ -148,7 +148,18 @@ const LandingPage: React.FC = () => {
         </Alert>
       )}
 
-      <Paper className="form-container" elevation={3}>
+      <Paper
+        className="form-container"
+        elevation={3}
+        sx={{
+          boxShadow: 5, // Matching shadow
+          borderRadius: '15px', // Matching rounded corners
+          p: 3, // Padding inside the card
+          mx: 'auto', // Center the card horizontally
+          maxWidth: 800, // Match the width of the Main Page card
+          backgroundColor: '#fff', // White background for consistency
+        }}
+      >
         <form onSubmit={handleSubmit}>
           <Grid container spacing={3} className="form-grid">
             <Grid item xs={12}>
@@ -271,6 +282,9 @@ const LandingPage: React.FC = () => {
                 fullWidth
                 size="large"
                 disabled={loading}
+                sx={{
+                  borderRadius: '15px', // Rounded button to match the card
+                }}
               >
                 {loading ? <CircularProgress size={24} /> : 'Find My Workout Buddy'}
               </Button>
@@ -282,4 +296,4 @@ const LandingPage: React.FC = () => {
   );
 };
 
-export default LandingPage; 
+export default LandingPage;
