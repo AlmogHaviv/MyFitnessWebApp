@@ -6,26 +6,26 @@
 
 /* Landing Page Styles */
 .landing-container {
-  max-width: 1200px;
-  margin: 8rem auto;
-  padding: 5rem;
+  max-width: 1000px;
+  margin: 1rem auto !important;
+  padding: 1rem !important;
 }
 
 .landing-header {
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-bottom: 8rem;
+  margin-bottom: 1rem;
 }
 
 .landing-icon {
   font-size: 100px !important;
   color: #1976d2;
-  margin-bottom: 2rem;
+  margin-bottom: 1rem;
 }
 
 .landing-title {
-  font-size: 5rem;
+  font-size: 2rem !important;
   font-weight: bold;
   margin-bottom: 4rem;
   text-align: center;
@@ -52,10 +52,40 @@
 }
 
 /* Main Page Styles */
+
 .main-container {
-  max-width: 800px;
-  margin: 2rem auto;
-  padding: 2rem;
+  max-width: 1000px;
+  margin: 1rem auto !important;
+  padding: 1rem !important;
+}
+
+.main-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.main-icon {
+  font-size: 100px !important;
+  color: #1976d2;
+  margin-bottom: 1rem;
+}
+
+.main-title {
+  font-size: 2rem !important;
+  font-weight: bold;
+  margin-bottom: 4rem;
+  text-align: center;
+  line-height: 1.1;
+}
+
+.main-subtitle {
+  font-size: 5rem;
+  color: #666;
+  text-align: center;
+  margin-bottom: 10rem;
+  line-height: 1.2;
 }
 
 .workout-recommendations {
@@ -65,6 +95,7 @@
 .recommendation-card {
   margin-bottom: 1rem;
   transition: transform 0.2s;
+  border-radius: 15px; /* More rounded corners */
 }
 
 .recommendation-card:hover {
@@ -75,6 +106,8 @@
   max-width: 400px;
   margin: 0 auto;
   transition: transform 0.2s;
+  border-radius: 15px; /* More rounded corners */
+
 }
 
 .buddy-card:hover {
@@ -147,6 +180,84 @@
   color: white;
 }
 
+/* Section Container Styles */
+.section-container {
+  background-color: #ffffff; /* White background for a clean look */
+  padding: 2.5rem; /* Increased padding for better spacing */
+  border-radius: 15px; /* More rounded corners */
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15); /* Stronger shadow for depth */
+  margin-bottom: 3rem; /* Increased margin for better separation */
+  transition: transform 0.3s, box-shadow 0.3s; /* Smooth hover effect */
+}
+
+.section-container:hover {
+  transform: translateY(-5px); /* Slight lift on hover */
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2); /* Enhanced shadow on hover */
+}
+
+/* Section Title Styles */
+.section-title {
+  font-size: 2rem; /* Slightly larger font size */
+  font-weight: 500; /* Bolder font weight */
+  text-align: center;
+  margin-bottom: 2rem;
+  letter-spacing: 1.2px; /* Slightly increased letter spacing */
+  display: inline-block;
+  padding-bottom: 0.7rem; /* Increased padding below the text */
+}
+
+/* Card Styles */
+.card-container {
+  max-width: 300px;
+  margin: 0 auto;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Subtle shadow for cards */
+  transition: transform 0.3s, box-shadow 0.3s; /* Smooth hover effect */
+}
+
+.card-container:hover {
+  transform: translateY(-5px); /* Slight lift on hover */
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15); /* Enhanced shadow on hover */
+}
+
+.card-media {
+  height: 150px;
+  object-fit: cover;
+}
+
+.card-content {
+  padding: 1.5rem;
+  text-align: center;
+}
+
+.card-title {
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+  color: #333;
+}
+
+.card-description {
+  font-size: 1rem;
+  color: #666;
+  margin-bottom: 1rem;
+}
+
+.card-button {
+  background-color: #1e88e5;
+  color: white;
+  padding: 0.5rem 1.5rem;
+  border-radius: 5px;
+  text-transform: uppercase;
+  font-weight: bold;
+  transition: background-color 0.3s;
+}
+
+.card-button:hover {
+  background-color: #1565c0; /* Darker blue on hover */
+}
+
 /* Responsive Design */
 @media (min-width: 600px) {
   .landing-title {
@@ -189,4 +300,24 @@
   .action-buttons {
     flex-direction: column;
   }
-} 
+
+  .section-container {
+    padding: 2rem;
+  }
+
+  .section-title {
+    font-size: 2.2rem;
+  }
+
+  .card-container {
+    max-width: 100%;
+  }
+
+  .card-title {
+    font-size: 1.3rem;
+  }
+
+  .card-description {
+    font-size: 0.9rem;
+  }
+}
