@@ -50,6 +50,7 @@ const MainPage: React.FC = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [equipment, setEquipment] = useState<Equipment[]>([]);
+  const [animationDirection, setAnimationDirection] = useState<'left' | 'right' | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -81,14 +82,22 @@ const MainPage: React.FC = () => {
     fetchData();
   }, [navigate]);
 
-  const handleLike = () => {
-    console.log('Liked:', buddies[currentIndex]?.full_name);
-    setCurrentIndex((prev) => prev + 1);
+  const handleLike = (index: number) => {
+    setAnimationDirection('right'); // Slide out to the right
+    setTimeout(() => {
+      console.log('Liked:', buddies[currentIndex + index]?.full_name);
+      setCurrentIndex((prev) => prev + 1);
+      setAnimationDirection(null); // Reset animation
+    }, 300); // Match the animation duration
   };
 
-  const handleDislike = () => {
-    console.log('Disliked:', buddies[currentIndex]?.full_name);
-    setCurrentIndex((prev) => prev + 1);
+  const handleDislike = (index: number) => {
+    setAnimationDirection('left'); // Slide out to the left
+    setTimeout(() => {
+      console.log('Disliked:', buddies[currentIndex + index]?.full_name);
+      setCurrentIndex((prev) => prev + 1);
+      setAnimationDirection(null); // Reset animation
+    }, 300); // Match the animation duration
   };
 
   if (loading) {
@@ -126,114 +135,133 @@ const MainPage: React.FC = () => {
         </Typography>
       </Box>
 
-
-      {/* Buddy Card or No Matches Message */}
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
+      {/* Buddy Cards or No Matches Message */}
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          minHeight: '50vh',
+          flexDirection: 'column',
+        }}
+      >
         {currentIndex < buddies.length ? (
-          <Card
+          <Grid
+            container
+            spacing={3}
+            justifyContent="center" // Center the cards horizontally
+            alignItems="center" // Center the cards vertically
             sx={{
-              width: '100%',
-              maxWidth: 800, // Keep the existing width
-              p: 2,
-              boxShadow: 5, // Matching shadow
-              borderRadius: '15px', // Matching rounded corners
-              display: 'flex',
-              flexDirection: { xs: 'column', sm: 'row' }, // Column for mobile, row for larger screens
-              alignItems: { xs: 'center', sm: 'stretch' }, // Stretch content on larger screens
-              position: 'relative', // Enable absolute positioning for buttons
+              maxWidth: 1200, // Match the width of the Suggested Exercises section
+              mx: 'auto', // Center the grid horizontally
             }}
           >
-            {/* Left: Picture */}
-            <CardMedia
-              component="img"
-              sx={{
-                height: { xs: 320, sm: 400 }, // Square for mobile, smaller for larger screens
-                width: { xs: 320, sm: 400 }, // Square for mobile, smaller for larger screens
-                objectFit: 'cover',
-                borderRadius: '15px', // Matching rounded corners
-                mb: { xs: 2, sm: 0 }, // Margin bottom for mobile
-                mr: { sm: 2 }, // Margin right for larger screens
-              }}
-              image={
-                currentBuddy.gender.toLowerCase() === 'female'
-                  ? 'https://media.theeverygirl.com/wp-content/uploads/2020/07/little-things-you-can-do-for-a-better-workout-the-everygirl-1.jpg'
-                  : 'https://hips.hearstapps.com/hmg-prod/images/young-muscular-build-athlete-exercising-strength-in-royalty-free-image-1706546541.jpg?crop=0.668xw:1.00xh;0.107xw,0&resize=640:*'
-              }
-              alt={currentBuddy.full_name}
-            />
-
-            {/* Right: Name and Description */}
-            <CardContent
-              sx={{
-                flex: 1,
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'center', // Center the content vertically
-                alignItems: 'center', // Center the content horizontally
-                textAlign: 'center', // Center the text
-              }}
-            >
-              {/* Buddy Info */}
-              <Box>
-                <Typography variant="h4" gutterBottom>
-                  {currentBuddy.full_name}, {currentBuddy.age}
-                </Typography>
-                <Stack direction="row" spacing={1} justifyContent="center" mb={2}>
-                  <Chip label={`VO2 Max: ${currentBuddy.VO2_max}`} color="primary" />
-                  <Chip label={`Body Fat: ${currentBuddy.body_fat}%`} />
-                </Stack>
-                <Typography variant="h6" color="text.secondary" mb={1}>
-                  <strong>Height:</strong> {currentBuddy.height} cm
-                </Typography>
-                <Typography variant="h6" color="text.secondary" mb={2}>
-                  <strong>Weight:</strong> {currentBuddy.weight} kg
-                </Typography>
-              </Box>
-
-              {/* Bottom: Like/Dislike Buttons */}
-              <Box
-                sx={{
-                  display: 'flex',
-                  justifyContent: 'space-between', // Buttons on opposite edges
-                  mt: 2,
-                  width: '100%', // Ensure buttons span the full width
-                }}
-              >
-                <Button
-                  variant="contained"
-                  color="error"
-                  startIcon={<CloseIcon />}
-                  onClick={handleDislike}
+            {buddies.slice(currentIndex, currentIndex + 3).map((buddy, index) => (
+              <Grid item xs={12} sm={6} md={4} key={buddy.id}>
+                <Card
                   sx={{
-                    fontSize: '1.2rem',
-                    py: 1.5, // Larger button height
-                    px: 3, // Larger button width
-                    borderRadius: '15px', // Rounded like the card
-                    flex: 1, // Make buttons equal width
-                    mr: 1, // Add spacing between buttons
+                    width: '100%',
+                    maxWidth: 300, // Reduce the card width
+                    p: 2,
+                    boxShadow: 5,
+                    borderRadius: '15px',
+                    display: 'flex',
+                    flexDirection: 'column', // Stack content vertically
+                    alignItems: 'center', // Center content horizontally
+                    position: 'relative',
                   }}
                 >
-                  Dislike
-                </Button>
-                <Button
-                  variant="contained"
-                  color="success"
-                  startIcon={<FavoriteIcon />}
-                  onClick={handleLike}
-                  sx={{
-                    fontSize: '1.2rem',
-                    py: 1.5, // Larger button height
-                    px: 3, // Larger button width
-                    borderRadius: '15px', // Rounded like the card
-                    flex: 1, // Make buttons equal width
-                    ml: 1, // Add spacing between buttons
-                  }}
-                >
-                  Like
-                </Button>
-              </Box>
-            </CardContent>
-          </Card>
+                  {/* Picture */}
+                  <CardMedia
+                    component="img"
+                    sx={{
+                      height: 300, // Reduce image height to make the card shorter
+                      width: '100%',
+                      objectFit: 'cover',
+                      borderRadius: '15px',
+                      mb: 2,
+                    }}
+                    image={
+                      buddy.gender.toLowerCase() === 'female'
+                        ? 'https://media.theeverygirl.com/wp-content/uploads/2020/07/little-things-you-can-do-for-a-better-workout-the-everygirl-1.jpg'
+                        : 'https://hips.hearstapps.com/hmg-prod/images/young-muscular-build-athlete-exercising-strength-in-royalty-free-image-1706546541.jpg?crop=0.668xw:1.00xh;0.107xw,0&resize=640:*'
+                    }
+                    alt={buddy.full_name}
+                  />
+
+                  {/* Name and Description */}
+                  <CardContent
+                    sx={{
+                      flex: 1,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      textAlign: 'center',
+                      p: 1, // Reduce padding inside the card
+                    }}
+                  >
+                    <Typography variant="h6" gutterBottom>
+                      {buddy.full_name}, {buddy.age}
+                    </Typography>
+                    <Stack direction="row" spacing={1} justifyContent="center" mb={1}>
+                      <Chip label={`VO2 Max: ${buddy.VO2_max}`} color="primary" />
+                      <Chip label={`Body Fat: ${buddy.body_fat}%`} />
+                    </Stack>
+                    <Typography variant="body2" color="text.secondary" mb={1}>
+                      <strong>Height:</strong> {buddy.height} cm
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      <strong>Weight:</strong> {buddy.weight} kg
+                    </Typography>
+                  </CardContent>
+
+                  {/* Like/Dislike Buttons */}
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      mt: 1, // Reduce margin above buttons
+                      width: '100%',
+                    }}
+                  >
+                    <Button
+                      variant="contained"
+                      color="error"
+                      startIcon={<CloseIcon />}
+                      onClick={() => handleDislike(index)}
+                      sx={{
+                        fontSize: '0.9rem', // Smaller font size
+                        py: 1, // Reduce button height
+                        px: 2, // Reduce button width
+                        borderRadius: '15px',
+                        flex: 1,
+                        mr: 1,
+                      }}
+                    >
+                      Dislike
+                    </Button>
+                    <Button
+                      variant="contained"
+                      color="success"
+                      startIcon={<FavoriteIcon />}
+                      onClick={() => handleLike(index)}
+                      sx={{
+                        fontSize: '0.9rem', // Smaller font size
+                        py: 1, // Reduce button height
+                        px: 2, // Reduce button width
+                        borderRadius: '15px',
+                        flex: 1,
+                        ml: 1,
+                      }}
+                    >
+                      Like
+                    </Button>
+                  </Box>
+                </Card>
+              </Grid>
+            ))}
+          </Grid>
         ) : (
           <Card sx={{ width: '100%', maxWidth: 500, boxShadow: 5, textAlign: 'center', p: 0, borderRadius: '15px' }}>
             <CardContent sx={{ p: 2 }}>
@@ -251,12 +279,12 @@ const MainPage: React.FC = () => {
       {/* Suggested Exercises Section */}
       <Box
         sx={{
-          boxShadow: 5, // Matching shadow
-          borderRadius: '15px', // Matching rounded corners
-          p: 3, // Padding inside the container
-          mx: 'auto', // Center the container horizontally
-          mt: 4, // Add margin on top
-          backgroundColor: '#fff', // White background for consistency
+          boxShadow: 5,
+          borderRadius: '15px',
+          p: 3,
+          mx: 'auto',
+          mt: 4,
+          backgroundColor: '#fff',
         }}
       >
         <Typography variant="h4" className="section-title" gutterBottom>
@@ -297,12 +325,12 @@ const MainPage: React.FC = () => {
       {/* Suggested Fitness Equipment Section */}
       <Box
         sx={{
-          boxShadow: 5, // Matching shadow
-          borderRadius: '15px', // Matching rounded corners
-          p: 3, // Padding inside the container
-          mx: 'auto', // Center the container horizontally
-          mt: 4, // Add margin on top
-          backgroundColor: '#fff', // White background for consistency
+          boxShadow: 5,
+          borderRadius: '15px',
+          p: 3,
+          mx: 'auto',
+          mt: 4,
+          backgroundColor: '#fff',
         }}
       >
         <Typography variant="h4" className="section-title" gutterBottom>
@@ -314,8 +342,8 @@ const MainPage: React.FC = () => {
               <Card
                 sx={{
                   width: '100%',
-                  borderRadius: '15px', // Matching rounded corners
-                  boxShadow: 2, // Subtle shadow for individual cards
+                  borderRadius: '15px',
+                  boxShadow: 2,
                 }}
               >
                 <CardMedia
@@ -336,7 +364,7 @@ const MainPage: React.FC = () => {
                     target="_blank"
                     sx={{
                       mt: 2,
-                      borderRadius: '15px', // Rounded button to match the card
+                      borderRadius: '15px',
                     }}
                   >
                     Buy on Amazon
