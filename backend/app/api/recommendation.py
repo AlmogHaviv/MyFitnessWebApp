@@ -1,9 +1,10 @@
 from fastapi import APIRouter, HTTPException
-from app.models import SimilarUsersResponse, WorkoutRecommendation, UserProfile
-from app.database import users_collection
+from app.models import SimilarUsersResponse, WorkoutRecommendation, UserProfile, UserEvent
+from app.database import users_collection, events_collection 
 import pandas as pd
 from user_recommender import UserRecommender
 import logging
+from datetime import datetime
 
 router = APIRouter()
 
@@ -61,3 +62,22 @@ async def find_similar_users(user_profile: UserProfile) -> SimilarUsersResponse:
     except Exception as e:
         print("Error details:", str(e))  # Log the full error
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/log-event")
+async def log_event(event: UserEvent):
+    """
+    Log a like/dislike event from the frontend.
+    """
+    try:
+        
+        event_data = event.dict()
+        event_data["timestamp"] = datetime.utcnow()  # Ensure the timestamp is in UTC
+        print("Received event:", event_data)
+
+        # Insert the event into the database:
+        # result = await events_collection.insert_one(event_data)
+        #return {"message": "Event logged successfully", "event_id": str(result.inserted_id)}
+
+    except Exception as e:
+        print("Error logging event:", str(e))
+        raise HTTPException(status_code=500, detail="Failed to log event")

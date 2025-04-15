@@ -17,12 +17,12 @@ import {
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import CloseIcon from '@mui/icons-material/Close';
 import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
-import { getSimilarUsers } from '../../services/api';
+import { getSimilarUsers, logEvent } from '../../services/api';
 import { getSuggestedExercises, Exercise, getSuggestedEquipment } from '../../services/exerciseService';
 
 // Define Buddy and Equipment interfaces directly in this file
 interface Buddy {
-  id: number;
+  id_number: number;
   full_name: string;
   age: number;
   gender: string;
@@ -51,6 +51,7 @@ const MainPage: React.FC = () => {
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [equipment, setEquipment] = useState<Equipment[]>([]);
   const [animationDirection, setAnimationDirection] = useState<'left' | 'right' | null>(null);
+  const [userData, setUserData] = useState<any>(null); // Add userData state
 
   useEffect(() => {
     const fetchData = async () => {
@@ -61,9 +62,12 @@ const MainPage: React.FC = () => {
           return;
         }
 
-        const userData = JSON.parse(userDataString);
-        const similarUsersResponse = await getSimilarUsers(userData);
+        const parsedUserData = JSON.parse(userDataString);
+        setUserData(parsedUserData); // Store userData in state
+
+        const similarUsersResponse = await getSimilarUsers(parsedUserData);
         setBuddies(similarUsersResponse.similar_users);
+        // console.log('Similar Users:', similarUsersResponse.similar_users);
 
         // Fetch suggested exercises
         const fetchedExercises = getSuggestedExercises();
@@ -82,19 +86,51 @@ const MainPage: React.FC = () => {
     fetchData();
   }, [navigate]);
 
-  const handleLike = (index: number) => {
+  const handleLike = async (index: number) => {
+
     setAnimationDirection('right'); // Slide out to the right
+
+    const currentUser = userData;
+    console.log('Current User:', currentUser);
+
+    const likedBuddy = buddies[currentIndex + index];
+    console.log('Liked User:', likedBuddy);
+
+
+    try {
+      // Log the like event
+      await logEvent(String(currentUser.id_number), String(likedBuddy.id_number), 'like');
+      console.log('Logged event: ',currentUser.full_name,'Liked', likedBuddy.full_name);
+    } catch (error) {
+      console.error('Error logging like event:', error);
+    }
+
     setTimeout(() => {
-      console.log('Liked:', buddies[currentIndex + index]?.full_name);
       setCurrentIndex((prev) => prev + 1);
       setAnimationDirection(null); // Reset animation
     }, 300); // Match the animation duration
   };
 
-  const handleDislike = (index: number) => {
-    setAnimationDirection('left'); // Slide out to the left
+  const handleDislike = async (index: number) => {
+
+    setAnimationDirection('left'); // Slide out to the right
+
+    const currentUser = userData;
+    console.log('Current User:', currentUser);
+
+    const dislikedBuddy = buddies[currentIndex + index];
+    console.log('Disiked User:', dislikedBuddy);
+
+
+    try {
+      // Log the like event
+      await logEvent(String(currentUser.id_number), String(dislikedBuddy.id_number), 'dislike');
+      console.log('Logged event: ',currentUser.full_name,'Disiked', dislikedBuddy.full_name);
+    } catch (error) {
+      console.error('Error logging like event:', error);
+    }
+
     setTimeout(() => {
-      console.log('Disliked:', buddies[currentIndex + index]?.full_name);
       setCurrentIndex((prev) => prev + 1);
       setAnimationDirection(null); // Reset animation
     }, 300); // Match the animation duration
@@ -157,7 +193,7 @@ const MainPage: React.FC = () => {
             }}
           >
             {buddies.slice(currentIndex, currentIndex + 3).map((buddy, index) => (
-              <Grid item xs={12} sm={6} md={4} key={buddy.id}>
+              <Grid item xs={12} sm={6} md={4} key={buddy.id_number}>
                 <Card
                   sx={{
                     width: '100%',

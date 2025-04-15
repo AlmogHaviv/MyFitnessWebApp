@@ -52,4 +52,30 @@ export const getSimilarUsers = async (userData: any) => {
     console.error('Error getting similar users:', error);
     throw error;
   }
-}; 
+};
+
+export const logEvent = async (userId: string, buddyId: string, action: string) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/log-event`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        user_id: userId,
+        buddy_id: buddyId,
+        action: action,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error logging event:', error);
+    throw error;
+  }
+};

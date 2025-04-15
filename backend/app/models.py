@@ -1,6 +1,7 @@
 from pydantic import BaseModel, Field
 from typing import List, Optional, Dict
 from bson import ObjectId
+from datetime import datetime
 
 
 class UserProfile(BaseModel):
@@ -74,4 +75,11 @@ class SimilarUsersResponse(BaseModel):
 
 class WorkoutRecommendation(BaseModel):
     recommended_workouts: List[Dict]
-    confidence_score: float 
+    confidence_score: float
+
+
+class UserEvent(BaseModel):
+    user_id: str
+    buddy_id: str
+    action: str  # "like" or "dislike"
+    timestamp: datetime = datetime.utcnow()

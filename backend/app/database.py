@@ -9,9 +9,10 @@ uri = "mongodb+srv://almoghaviv:almoghaviv@workoutapp.e0r5zoq.mongodb.net/?retry
 # Create a new asynchronous client and connect to the server
 client = AsyncIOMotorClient(uri, server_api=ServerApi('1'))
 
-# Define the database and collection
+# Define the database and collections
 db = client.workoutApp
 users_collection = db.users
+events_collection = db.events  
 
 # Get the absolute path to the project root directory
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
