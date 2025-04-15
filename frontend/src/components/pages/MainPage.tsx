@@ -17,8 +17,13 @@ import {
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import CloseIcon from '@mui/icons-material/Close';
 import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
+import Slide from '@mui/material/Slide';
+import Fade from '@mui/material/Fade';
+import MaleIcon from '@mui/icons-material/Male';
+import FemaleIcon from '@mui/icons-material/Female';
 import { getSimilarUsers, logEvent } from '../../services/api';
 import { getSuggestedExercises, Exercise, getSuggestedEquipment } from '../../services/exerciseService';
+import { getRandomImageByGender } from '../../services/imageStock';
 
 interface Buddy {
   id_number: number;
@@ -31,6 +36,7 @@ interface Buddy {
   resting_heart_rate: number;
   VO2_max: number;
   body_fat: number;
+  distance: number; // Added distance property for sorting
 }
 
 interface Equipment {
@@ -46,11 +52,12 @@ const MainPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [buddies, setBuddies] = useState<Buddy[]>([]);
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const [currentBuddies, setCurrentBuddies] = useState<Buddy[]>([]); // Track the 3 currently displayed buddies
+  const [seenBuddies, setSeenBuddies] = useState<Set<number>>(new Set()); // Track seen buddies
+  const [userData, setUserData] = useState<any>(null);
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [equipment, setEquipment] = useState<Equipment[]>([]);
   const [animationDirection, setAnimationDirection] = useState<'left' | 'right' | null>(null);
-  const [userData, setUserData] = useState<any>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -65,8 +72,18 @@ const MainPage: React.FC = () => {
         setUserData(parsedUserData);
 
         const similarUsersResponse = await getSimilarUsers(parsedUserData);
-        setBuddies(similarUsersResponse.similar_users);
 
+        // Sort buddies by distance (ascending) and set the initial list
+        const sortedBuddies = similarUsersResponse.similar_users.sort(
+          (a: Buddy, b: Buddy) => a.distance - b.distance
+        );
+        setBuddies(sortedBuddies);
+
+        // Display the first 3 buddies
+        setCurrentBuddies(sortedBuddies.slice(0, 3));
+        setSeenBuddies(new Set(sortedBuddies.slice(0, 3).map((buddy: { id_number: any; }) => buddy.id_number)));
+
+        // Fetch suggested exercises and equipment
         const fetchedExercises = getSuggestedExercises();
         setExercises(fetchedExercises);
 
@@ -82,13 +99,42 @@ const MainPage: React.FC = () => {
     fetchData();
   }, [navigate]);
 
+  const replaceBuddy = (index: number) => {
+    const updatedSeenBuddies = new Set(seenBuddies);
+    const currentBuddy = currentBuddies[index];
+    updatedSeenBuddies.add(currentBuddy.id_number); // Mark the current buddy as seen
+
+    // Find the next unseen buddy
+    const nextBuddy = buddies.find((buddy) => !updatedSeenBuddies.has(buddy.id_number));
+
+    if (nextBuddy) {
+      const updatedCurrentBuddies = [...currentBuddies];
+      updatedCurrentBuddies[index] = nextBuddy; // Replace the current buddy with the next unseen buddy
+      setAnimationDirection('left'); // Trigger the animation
+      setTimeout(() => {
+        setCurrentBuddies(updatedCurrentBuddies);
+        updatedSeenBuddies.add(nextBuddy.id_number); // Mark the new buddy as seen
+        setAnimationDirection(null); // Reset animation
+      }, 300); // Match the animation duration
+    } else {
+      // If no unseen buddies are left, remove the current buddy
+      const updatedCurrentBuddies = [...currentBuddies];
+      updatedCurrentBuddies.splice(index, 1);
+      setAnimationDirection('left'); // Trigger the animation
+      setTimeout(() => {
+        setCurrentBuddies(updatedCurrentBuddies);
+        setAnimationDirection(null); // Reset animation
+      }, 300); // Match the animation duration
+    }
+
+    setSeenBuddies(updatedSeenBuddies);
+  };
+
   const handleLike = async (index: number) => {
     setAnimationDirection('right');
 
     const currentUser = userData;
-    console.log('Current User:', currentUser);
-
-    const likedBuddy = buddies[currentIndex + index];
+    const likedBuddy = currentBuddies[index];
     console.log('Liked User:', likedBuddy);
 
     try {
@@ -99,7 +145,7 @@ const MainPage: React.FC = () => {
     }
 
     setTimeout(() => {
-      setCurrentIndex((prev) => prev + 1);
+      replaceBuddy(index); // Replace the liked buddy
       setAnimationDirection(null);
     }, 300);
   };
@@ -108,9 +154,7 @@ const MainPage: React.FC = () => {
     setAnimationDirection('left');
 
     const currentUser = userData;
-    console.log('Current User:', currentUser);
-
-    const dislikedBuddy = buddies[currentIndex + index];
+    const dislikedBuddy = currentBuddies[index];
     console.log('Disliked User:', dislikedBuddy);
 
     try {
@@ -121,7 +165,7 @@ const MainPage: React.FC = () => {
     }
 
     setTimeout(() => {
-      setCurrentIndex((prev) => prev + 1);
+      replaceBuddy(index); // Replace the disliked buddy
       setAnimationDirection(null);
     }, 300);
   };
@@ -163,8 +207,50 @@ const MainPage: React.FC = () => {
         borderRadius: '20px',
         boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.1)',
         padding: '20px',
+        position: 'relative', // Ensure positioning for the logout button and user info
       }}
     >
+      {/* Logout Button */}
+      <Button
+        variant="contained"
+        color="error"
+        sx={{
+          position: 'absolute',
+          top: 16,
+          right: 16,
+          borderRadius: '20px',
+          textTransform: 'none',
+        }}
+        onClick={() => navigate('/')} // Redirect to the landing page
+      >
+        Logout
+      </Button>
+
+      {/* Current User Section */}
+      {userData && (
+        <Box
+          sx={{
+            position: 'absolute',
+            top: 16,
+            left: 16,
+            backgroundColor: '#fff',
+            borderRadius: '15px',
+            boxShadow: '0px 2px 5px rgba(0, 0, 0, 0.1)',
+            padding: '8px 16px',
+          }}
+        >
+          <Typography
+            variant="body1"
+            sx={{
+              fontWeight: 'bold',
+              color: '#333',
+            }}
+          >
+            Welcome {userData.full_name}!
+          </Typography>
+        </Box>
+      )}
+
       <Box
         sx={{
           textAlign: 'center',
@@ -218,75 +304,83 @@ const MainPage: React.FC = () => {
         >
           Suggested Buddies
         </Typography>
-        {currentIndex < buddies.length ? (
+        {currentBuddies.length > 0 ? (
           <Grid container spacing={3}>
-            {buddies.slice(currentIndex, currentIndex + 3).map((buddy, index) => (
+            {currentBuddies.map((buddy, index) => (
               <Grid item xs={12} sm={6} md={4} key={buddy.id_number}>
-                <Card
-                  sx={{
-                    borderRadius: '20px',
-                    boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.1)',
-                  }}
+                <Fade
+                  in={true} // Always true to enable fading
+                  timeout={300} // Match the timeout with the setTimeout in replaceBuddy
                 >
-                  <CardMedia
-                    component="img"
-                    height="300"
-                    width="300"
-                    image={
-                      buddy.gender.toLowerCase() === 'female'
-                        ? 'https://media.theeverygirl.com/wp-content/uploads/2020/07/little-things-you-can-do-for-a-better-workout-the-everygirl-1.jpg'
-                        : 'https://hips.hearstapps.com/hmg-prod/images/young-muscular-build-athlete-exercising-strength-in-royalty-free-image-1706546541.jpg?crop=0.668xw:1.00xh;0.107xw,0&resize=640:*'
-                    }
-                    alt={buddy.full_name}
-                  />
-                  <CardContent>
-                    <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#333', textAlign: 'center' }}>
-                      {buddy.full_name}, {buddy.age}
-                    </Typography>
-                    <Stack direction="row" justifyContent="center" spacing={2} sx={{ mt: 1 }}>
-                      <Typography variant="body2" sx={{ color: '#666' }}>
-                        <strong>Height:</strong> {buddy.height} cm
-                      </Typography>
-                      <Typography variant="body2" sx={{ color: '#666' }}>
-                        <strong>Weight:</strong> {buddy.weight} kg
-                      </Typography>
-                    </Stack>
-                    <Stack direction="row" justifyContent="center" spacing={2} sx={{ mt: 1 }}>
-                      <Typography variant="body2" sx={{ color: '#666' }}>
-                        <strong>VO2 Max:</strong> {buddy.VO2_max}
-                      </Typography>
-                      <Typography variant="body2" sx={{ color: '#666' }}>
-                        <strong>Body Fat:</strong> {buddy.body_fat}%
-                      </Typography>
-                    </Stack>
-                    <Stack direction="row" spacing={2} justifyContent="center" sx={{ mt: 2 }}>
-                      <Button
-                        variant="contained"
-                        color="error"
-                        startIcon={<CloseIcon />}
-                        onClick={() => handleDislike(index)}
-                        sx={{
-                          borderRadius: '20px',
-                          textTransform: 'none',
-                        }}
-                      >
-                        Dislike
-                      </Button>
-                      <Button
-                        variant="contained"
-                        color="success"
-                        startIcon={<FavoriteIcon />}
-                        onClick={() => handleLike(index)}
-                        sx={{
-                          borderRadius: '20px',
-                          textTransform: 'none',
-                        }}
-                      >
-                        Like
-                      </Button>
-                    </Stack>
-                  </CardContent>
-                </Card>
+                  <Card
+                    sx={{
+                      borderRadius: '20px',
+                      boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.1)',
+                    }}
+                  >
+                    <CardMedia
+                      component="img"
+                      height="300"
+                      width="300"
+                      image={getRandomImageByGender(buddy.gender)} // Assign a random image based on gender
+                      alt={buddy.full_name}
+                    />
+                    <CardContent>
+                      <Stack direction="row" alignItems="center" justifyContent="center" spacing={1}>
+                        <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#333', textAlign: 'center' }}>
+                          {buddy.full_name}, {buddy.age}
+                        </Typography>
+                        {buddy.gender.toLowerCase() === 'female' ? (
+                          <FemaleIcon sx={{ color: '#e91e63' }} />
+                        ) : (
+                          <MaleIcon sx={{ color: '#2196f3' }} />
+                        )}
+                      </Stack>
+                      <Stack direction="row" justifyContent="center" spacing={2} sx={{ mt: 1 }}>
+                        <Typography variant="body2" sx={{ color: '#666' }}>
+                          <strong>Height:</strong> {buddy.height} cm
+                        </Typography>
+                        <Typography variant="body2" sx={{ color: '#666' }}>
+                          <strong>Weight:</strong> {buddy.weight} kg
+                        </Typography>
+                      </Stack>
+                      <Stack direction="row" justifyContent="center" spacing={2} sx={{ mt: 1 }}>
+                        <Typography variant="body2" sx={{ color: '#666' }}>
+                          <strong>VO2 Max:</strong> {buddy.VO2_max}
+                        </Typography>
+                        <Typography variant="body2" sx={{ color: '#666' }}>
+                          <strong>Body Fat:</strong> {buddy.body_fat}%
+                        </Typography>
+                      </Stack>
+                      <Stack direction="row" spacing={2} justifyContent="center" sx={{ mt: 2 }}>
+                        <Button
+                          variant="contained"
+                          color="error"
+                          startIcon={<CloseIcon />}
+                          onClick={() => handleDislike(index)}
+                          sx={{
+                            borderRadius: '20px',
+                            textTransform: 'none',
+                          }}
+                        >
+                          Dislike
+                        </Button>
+                        <Button
+                          variant="contained"
+                          color="success"
+                          startIcon={<FavoriteIcon />}
+                          onClick={() => handleLike(index)}
+                          sx={{
+                            borderRadius: '20px',
+                            textTransform: 'none',
+                          }}
+                        >
+                          Like
+                        </Button>
+                      </Stack>
+                    </CardContent>
+                  </Card>
+                </Fade>
               </Grid>
             ))}
           </Grid>
