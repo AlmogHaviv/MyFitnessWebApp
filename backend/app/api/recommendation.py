@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException
 from app.models import SimilarUsersResponse, WorkoutRecommendation, UserProfile, UserEvent
-from app.database import users_collection, events_collection 
+from app.database import users_collection, events_collection, workout_collection
 import pandas as pd
 from user_recommender import UserRecommender
 import logging
@@ -11,7 +11,8 @@ router = APIRouter()
 @router.post("/similar-users", response_model=SimilarUsersResponse)
 async def find_similar_users(user_profile: UserProfile) -> SimilarUsersResponse:
     """
-    Find similar users based on fitness and health metrics using KNN
+    Find similar users based on fitness and health metrics using KNN,
+    then filter by workout type preference
     """
     try:
         # Log received data
@@ -34,33 +35,84 @@ async def find_similar_users(user_profile: UserProfile) -> SimilarUsersResponse:
             'body_fat': user_profile.body_fat
         }
         
-        # Find similar users using the recommender
+        # Find similar users using the recommender (get 10 users)
         distances, id_numbers = user_recommender.find_similar_users(profile_dict)
+        
+        # Get the user's preferred workout type
+        user_workout = await workout_collection.find_one({"id_number": user_profile.id_number})
+        preferred_workout = user_workout["workout_type"] if user_workout else None
+        print(f"Preferred workout: {preferred_workout}")
+        
+        # Get workout types for all similar users
+        similar_users_workouts = {}
+        async for workout in workout_collection.find({"id_number": {"$in": id_numbers}}):
+            similar_users_workouts[workout["id_number"]] = workout["workout_type"]
+        
+        # If user has no workout preference, just return the top 5 similar users
+        if not preferred_workout:
+            final_id_numbers = id_numbers[:5]
+            final_distances = distances[:5]
+        else:
+            # Separate users by workout type preference
+            same_workout_users = []
+            different_workout_users = []
+            
+            for id_num, distance in zip(id_numbers, distances):
+                user_workout_type = similar_users_workouts.get(id_num)
+                if user_workout_type == preferred_workout:
+                    same_workout_users.append((id_num, distance))
+                else:
+                    different_workout_users.append((id_num, distance))
+            
+            # Sort both lists by distance (ascending)
+            same_workout_users.sort(key=lambda x: x[1])
+            print(f"Same workout users: {same_workout_users}")
+            different_workout_users.sort(key=lambda x: x[1])
+            print(f"Different workout users: {different_workout_users}")
+            
+            # Combine the lists, prioritizing same workout type users
+            final_users = []
+            final_distances = []
+            final_id_numbers = []
+            
+            # Add same workout type users first (up to 5)
+            for id_num, distance in same_workout_users[:5]:
+                final_users.append(id_num)
+                final_distances.append(distance)
+                final_id_numbers.append(id_num)
+            
+            # If we don't have 5 users yet, add different workout type users
+            if len(final_users) < 5:
+                print(f"Adding different workout type users: {different_workout_users}")
+                remaining_slots = 5 - len(final_users)
+                for id_num, distance in different_workout_users[:remaining_slots]:
+                    final_users.append(id_num)
+                    final_distances.append(distance)
+                    final_id_numbers.append(id_num)
         
         # Fetch similar users' data from MongoDB using the id numbers
         similar_users_data = []
-        cursor = users_collection.find({"id_number": {"$in": id_numbers}})
+        cursor = users_collection.find({"id_number": {"$in": final_id_numbers}})
         async for user in cursor:
             if "_id" in user:
                 del user["_id"]
+            # Add workout type to user data
+            user["workout_type"] = similar_users_workouts.get(user["id_number"], "Unknown")
             similar_users_data.append(user)
         
         if not similar_users_data:
             raise HTTPException(status_code=404, detail="No similar users found")
         
-        # Log the data being returned
-        print("Returning distances:", distances.tolist())
-        print("Returning id_numbers:", id_numbers)
-        print("Returning similar users data:", similar_users_data)
+        print(f"Final similar users data: {similar_users_data}")
         
         return SimilarUsersResponse(
-            distances=distances.tolist(),
-            id_numbers=id_numbers,
+            distances=final_distances,
+            id_numbers=final_id_numbers,
             similar_users=similar_users_data
         )
-        
+
     except Exception as e:
-        print("Error details:", str(e))  # Log the full error
+        print(f"Error in find_similar_users: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/log-event")

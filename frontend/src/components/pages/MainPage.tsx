@@ -36,6 +36,7 @@ interface Buddy {
   resting_heart_rate: number;
   VO2_max: number;
   body_fat: number;
+  workout_type: string;
   distance: number; // Added distance property for sorting
 }
 
@@ -342,6 +343,9 @@ const MainPage: React.FC = () => {
                         </Typography>
                         <Typography variant="body2" sx={{ color: '#666' }}>
                           <strong>Weight:</strong> {buddy.weight} kg
+                        </Typography>
+                        <Typography variant="body2" sx={{ color: '#666' }}>
+                          <strong>Preferred Workout Type:</strong> {buddy.workout_type}
                         </Typography>
                       </Stack>
                       <Stack direction="row" justifyContent="center" spacing={2} sx={{ mt: 1 }}>

@@ -2,6 +2,7 @@ from motor.motor_asyncio import AsyncIOMotorClient
 from pymongo.server_api import ServerApi
 import pandas as pd
 import os
+import asyncio
 
 # MongoDB URI
 uri = "mongodb+srv://almoghaviv:almoghaviv@workoutapp.e0r5zoq.mongodb.net/?retryWrites=true&w=majority&appName=workoutApp"
@@ -12,6 +13,7 @@ client = AsyncIOMotorClient(uri, server_api=ServerApi('1'))
 # Define the database and collections
 db = client.workoutApp
 users_collection = db.users
+workout_collection = db.workout
 events_collection = db.events  
 
 # Get the absolute path to the project root directory
@@ -78,3 +80,40 @@ async def test_connection():
 #         print(f"Error uploading data to MongoDB: {e}")
 #         return False
 
+# async def upload_data_to_mongo():
+#     try:
+#         # Read the CSV file using the absolute path
+#         csv_path = os.path.join(PROJECT_ROOT, 'data', 'workout_fitness_tracker_data.csv')
+#         df = pd.read_csv(csv_path)
+        
+#         # Convert DataFrame records to list of dictionaries
+#         records = df.to_dict('records')
+        
+#         # Process each record to match the UserProfile model structure
+#         processed_records = []
+#         for record in records:
+#             # Extract only the fields that match our UserProfile model
+#             user_record = {
+#                 "id_number": record["id_number"], 
+#                 "workout_type": record["workout_type"]
+#             }
+#             processed_records.append(user_record)
+
+#         # Insert the processed records into MongoDB
+#         result = await workout_collection.insert_many(processed_records)
+#         print(f"Successfully uploaded {len(result.inserted_ids)} records to MongoDB")
+#         return True
+
+#     except Exception as e:
+#         print(f"Error uploading data to MongoDB: {e}")
+#         return False
+    
+# async def main():
+#     success = await upload_data_to_mongo()
+#     if success:
+#         print("Data upload completed successfully!")
+#     else:
+#         print("Data upload failed!")
+
+# if __name__ == "__main__":
+#     asyncio.run(main()) 

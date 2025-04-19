@@ -23,9 +23,10 @@ class UserProfile(BaseModel):
 
 # Model for Workout
 class Workout(BaseModel):
+    id_number: int
     workout_type: str
-    workout_intensity: str
-    duration: int  # in minutes
+    # workout_intensity: str
+    # duration: int  # in minutes
 
 # Model for Exercises
 class Exercise(BaseModel):

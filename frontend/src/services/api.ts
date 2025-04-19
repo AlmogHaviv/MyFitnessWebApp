@@ -10,7 +10,7 @@ export const createUserProfile = async (userData: any) => {
     // Remove the gender conversion and send the data as is
     console.log('API call data:', userData);
     
-    const response = await fetch(`${API_BASE_URL}/similar-users`, {
+    const response = await fetch(`${API_BASE_URL}/users`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -76,6 +76,28 @@ export const logEvent = async (userId: string, buddyId: string, action: string) 
     return await response.json();
   } catch (error) {
     console.error('Error logging event:', error);
+    throw error;
+  }
+};
+
+export const createWorkout = async (workoutData: { id_number: number; workout_type: string }) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/workouts`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(workoutData),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.detail || `Failed to create workout: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error creating workout:', error);
     throw error;
   }
 };

@@ -47,7 +47,7 @@ class UserRecommender:
         processed_data = self.preprocess_data(df, fit=True)
 
         # Train KNN
-        self.model = NearestNeighbors(n_neighbors=5, metric='euclidean')
+        self.model = NearestNeighbors(n_neighbors=10, metric='euclidean')
         self.model.fit(processed_data)
 
         # Save model and preprocessing tools

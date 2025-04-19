@@ -17,7 +17,7 @@ import {
   CircularProgress,
 } from '@mui/material';
 import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
-import { createUserProfile } from '../../services/api';
+import { createUserProfile, createWorkout } from '../../services/api';
 import '../../styles/App.css';
 
 interface UserProfile {
@@ -31,6 +31,7 @@ interface UserProfile {
   resting_heart_rate: number;
   VO2_max: number;
   body_fat: number;
+  workout_type: string;
   [key: string]: string | number;
 }
 
@@ -47,6 +48,7 @@ const LandingPage: React.FC = () => {
     resting_heart_rate: 0,
     VO2_max: 0,
     body_fat: 0,
+    workout_type: '',
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -68,7 +70,8 @@ const LandingPage: React.FC = () => {
         'daily_calories_intake',
         'resting_heart_rate',
         'VO2_max',
-        'body_fat'
+        'body_fat',
+        'workout_type'
       ] as const;
       
       for (const field of requiredFields) {
@@ -78,7 +81,7 @@ const LandingPage: React.FC = () => {
       }
 
       // Convert and validate data types
-      const formDataToSubmit = {
+      const userProfileData = {
         full_name: formData.full_name.trim(),
         age: Math.floor(Number(formData.age)),
         id_number: Math.floor(Number(formData.id_number)),
@@ -91,18 +94,33 @@ const LandingPage: React.FC = () => {
         body_fat: Number(formData.body_fat)
       };
 
-      // Update gender validation to match your MenuItem values
-      if (!['Male', 'Female', 'Other'].includes(formDataToSubmit.gender)) {
+      // Update gender validation to match MenuItem values
+      if (!['Male', 'Female', 'Other'].includes(userProfileData.gender)) {
         throw new Error('Invalid gender value');
       }
 
-      console.log('Submitting data:', formDataToSubmit); // Debug log
+      // Update workout type validation to match MenuItem values
+      if (!['Cycling', 'Cardio', 'HIIT', 'Strength', 'Yoga', 'Running'].includes(formData.workout_type)) {
+        throw new Error('Invalid workout type value');
+      }
 
-      // Send data to backend
-      const response = await createUserProfile(formDataToSubmit);
+      console.log('Submitting user profile:', userProfileData);
+      console.log('Submitting workout type:', formData.workout_type);
+
+      // First create the user profile
+      const userResponse = await createUserProfile(userProfileData);
+      console.log('User created:', userResponse);
+      
+      // Then create the workout preference
+      const workoutData = {
+        id_number: userProfileData.id_number,
+        workout_type: formData.workout_type
+      };
+      const workoutResponse = await createWorkout(workoutData);
+      console.log('Workout created:', workoutResponse);
       
       // Store user data in localStorage
-      localStorage.setItem('userData', JSON.stringify(formDataToSubmit));
+      localStorage.setItem('userData', JSON.stringify({...userProfileData, workout_type: formData.workout_type}));
       
       // Navigate to main page
       navigate('/main');
@@ -206,6 +224,24 @@ const LandingPage: React.FC = () => {
                   <MenuItem value="Male">Male</MenuItem>
                   <MenuItem value="Female">Female</MenuItem>
                   <MenuItem value="Other">Other</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12}>
+              <FormControl fullWidth>
+                <InputLabel>Workout Type</InputLabel>
+                <Select
+                  name="workout_type"
+                  value={formData.workout_type}
+                  onChange={handleSelectChange}
+                  required
+                >
+                  <MenuItem value="Cycling">Cycling</MenuItem>
+                  <MenuItem value="Cardio">Cardio</MenuItem>
+                  <MenuItem value="HIIT">HIIT</MenuItem>
+                  <MenuItem value="Strength">Strength</MenuItem>
+                  <MenuItem value="Yoga">Yoga</MenuItem>
+                  <MenuItem value="Running">Running</MenuItem>
                 </Select>
               </FormControl>
             </Grid>
