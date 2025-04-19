@@ -46,10 +46,10 @@ async def create_workout(workout: Workout):
 
 # Route to get a user by ID
 @router.get("/users/{user_id}", response_model=UserProfile)
-async def get_user(user_id: str):
-    user = await users_collection.find_one({"_id": ObjectId(user_id)})
+async def get_user(user_id: int):
+    user = await users_collection.find_one({"id_number": user_id})
     if user:
-        user["_id"] = str(user["_id"])  # Convert ObjectId to string
+        user["id_number"] = user["id_number"]
         return user
     raise HTTPException(status_code=404, detail="User not found")
 

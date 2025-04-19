@@ -70,15 +70,15 @@ class UserRecommender:
 
     def save_model(self):
         """Save the trained model and preprocessing objects."""
-        os.makedirs('backend/models', exist_ok=True)
-        joblib.dump(self.model, 'backend/models/user_recommender_model.joblib')
-        joblib.dump(self.scaler, 'backend/models/scaler.joblib')
-        joblib.dump(self.label_encoder, 'backend/models/label_encoder.joblib')
-        joblib.dump(self.user_ids, "backend/models/user_ids.pkl")  # <-- Save user_ids
+        os.makedirs('models', exist_ok=True)
+        joblib.dump(self.model, 'models/user_recommender_model.joblib')
+        joblib.dump(self.scaler, 'models/scaler.joblib')
+        joblib.dump(self.label_encoder, 'models/label_encoder.joblib')
+        joblib.dump(self.user_ids, "models/user_ids.pkl")  # <-- Save user_ids
 
     def load_model(self):
         """Load the trained model and preprocessing objects."""
-        self.model = joblib.load('backend/models/user_recommender_model.joblib')
-        self.scaler = joblib.load('backend/models/scaler.joblib')
-        self.label_encoder = joblib.load('backend/models/label_encoder.joblib')
-        self.user_ids = joblib.load('backend/models/user_ids.pkl')
+        self.model = joblib.load('models/user_recommender_model.joblib')
+        self.scaler = joblib.load('models/scaler.joblib')
+        self.label_encoder = joblib.load('models/label_encoder.joblib')
+        self.user_ids = joblib.load('models/user_ids.pkl')
