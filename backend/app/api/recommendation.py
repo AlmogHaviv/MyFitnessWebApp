@@ -37,6 +37,18 @@ async def find_similar_users(user_profile: UserProfile) -> SimilarUsersResponse:
         
         # Find similar users using the recommender (get 10 users)
         distances, id_numbers = user_recommender.find_similar_users(profile_dict)
+
+        # Remove the user from the list of similar users (avoid self-similarity)
+        id_numbers_filtered = [
+            id_num for id_num in id_numbers if id_num != user_profile.id_number
+        ]
+        distances_filtered = [
+            dist for id_num, dist in zip(id_numbers, distances) if id_num != user_profile.id_number
+        ]
+
+        # Update id_numbers and distances
+        id_numbers = id_numbers_filtered
+        distances = distances_filtered
         
         # Get the user's preferred workout type
         user_workout = await workout_collection.find_one({"id_number": user_profile.id_number})
@@ -91,14 +103,17 @@ async def find_similar_users(user_profile: UserProfile) -> SimilarUsersResponse:
                     final_id_numbers.append(id_num)
         
         # Fetch similar users' data from MongoDB using the id numbers
-        similar_users_data = []
+        # Fetch all relevant users
+        user_docs = {}
         cursor = users_collection.find({"id_number": {"$in": final_id_numbers}})
         async for user in cursor:
             if "_id" in user:
                 del user["_id"]
-            # Add workout type to user data
             user["workout_type"] = similar_users_workouts.get(user["id_number"], "Unknown")
-            similar_users_data.append(user)
+            user_docs[user["id_number"]] = user
+
+        # Reorder users to match final_id_numbers
+        similar_users_data = [user_docs[id_num] for id_num in final_id_numbers if id_num in user_docs]
         
         if not similar_users_data:
             raise HTTPException(status_code=404, detail="No similar users found")
