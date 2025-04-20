@@ -322,7 +322,7 @@ const LandingPage: React.FC = () => {
                   borderRadius: '15px', // Rounded button to match the card
                 }}
               >
-                {loading ? <CircularProgress size={24} /> : 'Find My Workout Buddy'}
+                {loading ? <CircularProgress size={24} /> : ' Register and Find My Workout Buddy'}
               </Button>
             </Grid>
           </Grid>

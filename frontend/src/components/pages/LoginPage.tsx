@@ -25,7 +25,7 @@ const LoginPage: React.FC = () => {
 
     const isValid = /^\d{9}$/.test(ssn);
     if (!isValid) {
-      setError('Please enter a valid 9-digit SSN.');
+      setError('Please enter a valid 9-digit ID number.');
       setLoading(false);
       return;
     }
@@ -44,6 +44,10 @@ const LoginPage: React.FC = () => {
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     setSsn(e.target.value);
+  };
+
+  const handleSignup = () => {
+    navigate('/land');
   };
 
   return (
@@ -89,16 +93,27 @@ const LoginPage: React.FC = () => {
           sx={{ mb: 3 }}
         />
 
+      <Box sx={{ display: 'flex', gap: 2 }}>
         <Button
           variant="contained"
           color="primary"
-          fullWidth
           onClick={handleNext}
           disabled={loading}
-          sx={{ borderRadius: '15px' }}
+          sx={{ flex: 1, borderRadius: '15px' }}
         >
-          {loading ? <CircularProgress size={24} /> : 'Next'}
+          {loading ? <CircularProgress size={24} /> : 'Login'}
         </Button>
+
+        <Button
+          variant="outlined"
+          color="secondary"
+          onClick={handleSignup}
+          sx={{ flex: 1, borderRadius: '15px' }}
+        >
+          Signup
+        </Button>
+      </Box>
+
       </Paper>
     </Container>
   );
