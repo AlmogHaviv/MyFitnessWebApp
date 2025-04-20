@@ -11,18 +11,18 @@ import {
   Alert,
 } from '@mui/material';
 import LockIcon from '@mui/icons-material/Lock';
+import { getUserById } from '../../services/api';
 
 const LoginPage: React.FC = () => {
+  const navigate = useNavigate();
   const [ssn, setSsn] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const navigate = useNavigate();
 
-  const handleNext = () => {
+  const handleNext = async () => {
     setError(null);
     setLoading(true);
 
-    // Basic SSN validation (can be expanded)
     const isValid = /^\d{9}$/.test(ssn);
     if (!isValid) {
       setError('Please enter a valid 9-digit SSN.');
@@ -30,10 +30,16 @@ const LoginPage: React.FC = () => {
       return;
     }
 
-    // Simulate delay, then navigate
-    setTimeout(() => {
-      navigate('/land');
-    }, 500);
+    try {
+      const user = await getUserById(parseInt(ssn));
+      console.log('User found:', user);
+      localStorage.setItem('userData', JSON.stringify(user));
+      navigate('/main');
+    } catch (err: any) {
+      setError('User not found or invalid ID.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -54,7 +60,7 @@ const LoginPage: React.FC = () => {
           Secure Login
         </Typography>
         <Typography variant="subtitle1" color="text.secondary">
-          Enter your SSN to continue
+          Enter your ID number to continue
         </Typography>
       </Box>
 
@@ -73,8 +79,8 @@ const LoginPage: React.FC = () => {
         }}
       >
         <TextField
-          label="Social Security Number"
-          placeholder="Enter 9-digit SSN"
+          label="ID Number"
+          placeholder="Enter 9-digit IDs"
           fullWidth
           variant="outlined"
           value={ssn}

@@ -101,3 +101,22 @@ export const createWorkout = async (workoutData: { id_number: number; workout_ty
     throw error;
   }
 };
+
+export const getUserById = async (userId: number) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/users/${userId}`, {
+      method: 'GET',
+      headers: defaultHeaders,
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.detail || `User fetch failed: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching user by ID:', error);
+    throw error;
+  }
+};
