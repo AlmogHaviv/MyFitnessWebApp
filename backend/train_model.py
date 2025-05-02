@@ -4,10 +4,13 @@ from user_recommender import UserRecommender
 import random
 import os
 import time
+from scipy.sparse import csr_matrix
+from sklearn.decomposition import TruncatedSVD
+import numpy as np
+
 # Set up logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
 
 def train_and_save_model():
     """Train the recommender system, save the model, and find similar users."""
@@ -148,6 +151,46 @@ def train_and_save_model():
         logger.error(f"Error occurred: {e}")
         raise
 
+def build_interaction_matrix(events_collection):
+    """
+    Build a user-buddy interaction matrix from the events collection.
+    """
+    events = list(events_collection.find({}))
+    df = pd.DataFrame(events)
+
+    # Map actions to numerical values
+    action_mapping = {"like": 1, "dislike": -1}
+    df["interaction"] = df["action"].map(action_mapping)
+
+    # Pivot the DataFrame to create the interaction matrix
+    interaction_matrix = df.pivot_table(index="user_id", columns="buddy_id", values="interaction", fill_value=0)
+
+    # Converts the dense matrix into a Compressed Sparse Row (CSR) matrix to save memory and computation time
+    sparse_matrix = csr_matrix(interaction_matrix.values) 
+
+    return sparse_matrix, interaction_matrix.index, interaction_matrix.columns
+
+def train_matrix_factorization_model(sparse_matrix, n_components=10):
+    """
+    Train a matrix factorization model using TruncatedSVD.
+    """
+    svd = TruncatedSVD(n_components=n_components, random_state=42)
+    user_factors = svd.fit_transform(sparse_matrix)
+    buddy_factors = svd.components_.T  # Transpose to align with users
+    return svd, user_factors, buddy_factors
+
+def recommend_buddies(user_id, user_factors, buddy_factors, user_index, buddy_index, top_n):
+    """
+    Recommend buddies for a given user based on the trained model.
+    """
+    if user_id not in user_index:
+        raise ValueError(f"User ID {user_id} not found in the interaction matrix.")
+
+    user_idx = user_index.get_loc(user_id)
+    scores = np.dot(user_factors[user_idx], buddy_factors.T)
+    recommended_indices = np.argsort(scores)[::-1][:top_n]
+    recommended_buddies = buddy_index[recommended_indices]
+    return recommended_buddies
 
 def test_loaded_model():
     """Test that the saved model can be loaded and used correctly."""

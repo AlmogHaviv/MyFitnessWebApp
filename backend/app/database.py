@@ -14,7 +14,7 @@ client = AsyncIOMotorClient(uri, server_api=ServerApi('1'))
 db = client.workoutApp
 users_collection = db.users
 workout_collection = db.workout
-events_collection = db.events  
+events_collection = db.events
 
 # Get the absolute path to the project root directory
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -116,4 +116,4 @@ async def test_connection():
 #         print("Data upload failed!")
 
 # if __name__ == "__main__":
-#     asyncio.run(main()) 
+#     asyncio.run(main())

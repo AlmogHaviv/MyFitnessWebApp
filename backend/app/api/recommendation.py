@@ -1,3 +1,4 @@
+from backend.train_model import build_interaction_matrix, recommend_buddies, train_matrix_factorization_model
 from fastapi import APIRouter, HTTPException
 from app.models import SimilarUsersResponse, WorkoutRecommendation, UserProfile, UserEvent
 from app.database import users_collection, events_collection, workout_collection
@@ -142,9 +143,30 @@ async def log_event(event: UserEvent):
         print("Received event:", event_data)
 
         # Insert the event into the database:
-        # result = await events_collection.insert_one(event_data)
-        #return {"message": "Event logged successfully", "event_id": str(result.inserted_id)}
+        result = await events_collection.insert_one(event_data)
+        return {"message": "Event logged successfully", "event_id": str(result.inserted_id)}
 
     except Exception as e:
         print("Error logging event:", str(e))
         raise HTTPException(status_code=500, detail="Failed to log event")
+
+@router.get("/recommend-buddies/{user_id}")
+async def recommend_buddies_endpoint(user_id: str):
+    """
+    Recommend buddies for a given user.
+    """
+    try:
+        # Fetch events and build the interaction matrix
+        events_df = pd.DataFrame(list(events_collection.find({})))
+        sparse_matrix, user_index, buddy_index = build_interaction_matrix(events_df)
+
+        # Train the model
+        svd, user_factors, buddy_factors = train_matrix_factorization_model(sparse_matrix)
+
+        # Make predictions
+        recommended_buddies = recommend_buddies(user_id, user_factors, buddy_factors, user_index, buddy_index, top_n=10)
+        return {"recommended_buddies": recommended_buddies.tolist()}
+
+    except Exception as e:
+        print("Error recommending buddies:", str(e))
+        raise HTTPException(status_code=500, detail="Failed to recommend buddies")
