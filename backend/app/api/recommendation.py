@@ -1,4 +1,4 @@
-from backend.train_model import build_interaction_matrix, recommend_buddies, train_matrix_factorization_model
+from train_model import build_interaction_matrix, recommend_buddies, train_matrix_factorization_model
 from fastapi import APIRouter, HTTPException
 from app.models import SimilarUsersResponse, WorkoutRecommendation, UserProfile, UserEvent
 from app.database import users_collection, events_collection, workout_collection
