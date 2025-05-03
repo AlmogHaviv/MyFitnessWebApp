@@ -1,9 +1,10 @@
-from train_model import build_interaction_matrix, recommend_buddies, train_matrix_factorization_model
+
 from fastapi import APIRouter, HTTPException
-from app.models import SimilarUsersResponse, WorkoutRecommendation, UserProfile, UserEvent
+from app.models import SimilarUsersResponse, UserProfile, UserEvent
 from app.database import users_collection, events_collection, workout_collection
 import pandas as pd
-from user_recommender import UserRecommender
+from models_training_pipeline.knn.user_recommender import UserRecommender
+from models_training_pipeline.svd.svd_recommender import SVDRecommender
 import logging
 from datetime import datetime
 
@@ -138,8 +139,8 @@ async def log_event(event: UserEvent):
     """
     try:
         
-        event_data = event.dict()
-        event_data["timestamp"] = datetime.utcnow()  # Ensure the timestamp is in UTC
+        event_data = event.model_dump()
+        event_data["timestamp"] = datetime.now()  # Ensure the timestamp is in UTC
         print("Received event:", event_data)
 
         # Insert the event into the database:
@@ -156,15 +157,10 @@ async def recommend_buddies_endpoint(user_id: str):
     Recommend buddies for a given user.
     """
     try:
-        # Fetch events and build the interaction matrix
-        events_df = pd.DataFrame(list(events_collection.find({})))
-        sparse_matrix, user_index, buddy_index = build_interaction_matrix(events_df)
-
-        # Train the model
-        svd, user_factors, buddy_factors = train_matrix_factorization_model(sparse_matrix)
-
-        # Make predictions
-        recommended_buddies = recommend_buddies(user_id, user_factors, buddy_factors, user_index, buddy_index, top_n=10)
+        svd_recommender = SVDRecommender()
+        svd_recommender.load("models/svd_model")
+        recommended_buddies = svd_recommender.recommend(user_id, top_n=5)
+        print(recommended_buddies)
         return {"recommended_buddies": recommended_buddies.tolist()}
 
     except Exception as e:
