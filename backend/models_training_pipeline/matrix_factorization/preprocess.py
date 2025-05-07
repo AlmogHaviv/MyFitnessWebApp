@@ -54,9 +54,9 @@ def build_liked_disliked_pairs(events, id_to_index):
 def compatibility_score(u1, u2):
     score = 0
     if u1["workout_type"] == u2["workout_type"]:
-        score += 2
+        score += 3
     if abs(u1["age"] - u2["age"]) <= 5:
-        score += 1
+        score += 2
     if u1["gender"] == u2["gender"]:
         score += 0.5
     if abs(u1["VO2_max"] - u2["VO2_max"]) <= 5:

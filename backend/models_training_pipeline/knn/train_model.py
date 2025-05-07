@@ -112,6 +112,16 @@ def train_and_save_model():
         recommender.save_model()
         logger.info("Model training completed and saved successfully!")
 
+         # Load dataset
+        df = pd.read_csv('data/workout_fitness_tracker_data.csv')
+
+        # Visualize clusters
+        logger.info("Visualizing clusters...")
+        df = pd.read_csv(csv_path)
+        df_with_clusters = recommender.analyze_clusters(df)
+        recommender.plot_box_by_cluster(df_with_clusters, feature='age')
+        recommender.plot_clusters(df)
+
         # Define a sample user profile for finding similar users
         user_profile = {
             'age': 25,
