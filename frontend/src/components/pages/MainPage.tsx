@@ -21,7 +21,7 @@ import Slide from '@mui/material/Slide';
 import Fade from '@mui/material/Fade';
 import MaleIcon from '@mui/icons-material/Male';
 import FemaleIcon from '@mui/icons-material/Female';
-import { getSimilarUsers, logEvent } from '../../services/api';
+import { getSimilarUsers, recommendBuddies, logEvent } from '../../services/api';
 import { getSuggestedExercises, Exercise, getSuggestedEquipment } from '../../services/exerciseService';
 import { getRandomImageByGender } from '../../services/imageStock';
 
@@ -52,12 +52,22 @@ const MainPage: React.FC = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // States for "Similar Buddies"
   const [buddies, setBuddies] = useState<Buddy[]>([]);
-  const [currentBuddies, setCurrentBuddies] = useState<Buddy[]>([]); // Track the 3 currently displayed buddies
-  const [seenBuddies, setSeenBuddies] = useState<Set<number>>(new Set()); // Track seen buddies
-  const [userData, setUserData] = useState<any>(null);
+  const [currentBuddies, setCurrentBuddies] = useState<Buddy[]>([]);
+  const [seenBuddies, setSeenBuddies] = useState<Set<number>>(new Set());
+
+  // States for "Recommended Buddies"
+  const [recommendedBuddies, setRecommendedBuddies] = useState<Buddy[]>([]);
+  const [currentRecommendedBuddies, setCurrentRecommendedBuddies] = useState<Buddy[]>([]);
+  const [seenRecommendedBuddies, setSeenRecommendedBuddies] = useState<Set<number>>(new Set());
+
+  // States for Exercises and Equipment
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [equipment, setEquipment] = useState<Equipment[]>([]);
+
+  const [userData, setUserData] = useState<any>(null);
   const [animationDirection, setAnimationDirection] = useState<'left' | 'right' | null>(null);
 
   useEffect(() => {
@@ -72,17 +82,23 @@ const MainPage: React.FC = () => {
         const parsedUserData = JSON.parse(userDataString);
         setUserData(parsedUserData);
 
+        // Fetch similar buddies
         const similarUsersResponse = await getSimilarUsers(parsedUserData);
-
-        // Sort buddies by distance (ascending) and set the initial list
         const sortedBuddies = similarUsersResponse.similar_users.sort(
           (a: Buddy, b: Buddy) => a.distance - b.distance
         );
         setBuddies(sortedBuddies);
-
-        // Display the first 3 buddies
         setCurrentBuddies(sortedBuddies.slice(0, 3));
         setSeenBuddies(new Set(sortedBuddies.slice(0, 3).map((buddy: { id_number: any; }) => buddy.id_number)));
+
+        // Fetch recommended buddies
+        const recommendations = await recommendBuddies(String(parsedUserData.id_number));
+        setRecommendedBuddies(recommendations.recommended_buddies);
+        setCurrentRecommendedBuddies(recommendations.recommended_buddies.slice(0, 3));
+        setSeenRecommendedBuddies(
+          new Set(recommendations.recommended_buddies.slice(0, 3).map((buddy: { id_number: any; }) => buddy.id_number))
+        );
+
 
         // Fetch suggested exercises and equipment
         const fetchedExercises = getSuggestedExercises();
@@ -131,6 +147,29 @@ const MainPage: React.FC = () => {
     setSeenBuddies(updatedSeenBuddies);
   };
 
+  const replaceRecommendedBuddy = (index: number) => {
+    const updatedSeenRecommendedBuddies = new Set(seenRecommendedBuddies);
+    const currentBuddy = currentRecommendedBuddies[index];
+    updatedSeenRecommendedBuddies.add(currentBuddy.id_number);
+
+    const nextBuddy = recommendedBuddies.find(
+      (buddy) => !updatedSeenRecommendedBuddies.has(buddy.id_number)
+    );
+
+    if (nextBuddy) {
+      const updatedCurrentRecommendedBuddies = [...currentRecommendedBuddies];
+      updatedCurrentRecommendedBuddies[index] = nextBuddy;
+      setCurrentRecommendedBuddies(updatedCurrentRecommendedBuddies);
+      updatedSeenRecommendedBuddies.add(nextBuddy.id_number);
+    } else {
+      const updatedCurrentRecommendedBuddies = [...currentRecommendedBuddies];
+      updatedCurrentRecommendedBuddies.splice(index, 1);
+      setCurrentRecommendedBuddies(updatedCurrentRecommendedBuddies);
+    }
+
+    setSeenRecommendedBuddies(updatedSeenRecommendedBuddies);
+  };
+
   const handleLike = async (index: number) => {
     setAnimationDirection('right');
 
@@ -167,6 +206,46 @@ const MainPage: React.FC = () => {
 
     setTimeout(() => {
       replaceBuddy(index); // Replace the disliked buddy
+      setAnimationDirection(null);
+    }, 300);
+  };
+
+  const handleLikeRecommended = async (index: number) => {
+    setAnimationDirection('right');
+
+    const currentUser = userData;
+    const likedBuddy = currentRecommendedBuddies[index];
+    console.log('Liked Recommended User:', likedBuddy);
+
+    try {
+      await logEvent(String(currentUser.id_number), String(likedBuddy.id_number), 'like');
+      console.log('Logged event: ', currentUser.full_name, 'Liked Recommended', likedBuddy.full_name);
+    } catch (error) {
+      console.error('Error logging like event for recommended buddy:', error);
+    }
+
+    setTimeout(() => {
+      replaceRecommendedBuddy(index); // Replace the liked recommended buddy
+      setAnimationDirection(null);
+    }, 300);
+  };
+
+  const handleDislikeRecommended = async (index: number) => {
+    setAnimationDirection('left');
+
+    const currentUser = userData;
+    const dislikedBuddy = currentRecommendedBuddies[index];
+    console.log('Disliked Recommended User:', dislikedBuddy);
+
+    try {
+      await logEvent(String(currentUser.id_number), String(dislikedBuddy.id_number), 'dislike');
+      console.log('Logged event: ', currentUser.full_name, 'Disliked Recommended', dislikedBuddy.full_name);
+    } catch (error) {
+      console.error('Error logging dislike event for recommended buddy:', error);
+    }
+
+    setTimeout(() => {
+      replaceRecommendedBuddy(index); // Replace the disliked recommended buddy
       setAnimationDirection(null);
     }, 300);
   };
@@ -285,6 +364,116 @@ const MainPage: React.FC = () => {
         </Typography>
       </Box>
 
+      {/* Recommended Buddies Section */}
+      <Box
+        sx={{
+          boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.1)',
+          borderRadius: '20px',
+          p: 3,
+          mb: 4,
+          backgroundColor: '#fff',
+        }}
+      >
+        <Typography
+          variant="h4"
+          sx={{
+            fontWeight: 'bold',
+            color: '#333',
+            mb: 2,
+          }}
+        >
+          Recommended Buddies
+        </Typography>
+        {currentRecommendedBuddies.length > 0 ? (
+          <Grid container spacing={3}>
+            {currentRecommendedBuddies.map((buddy, index) => (
+              <Grid item xs={12} sm={6} md={4} key={buddy.id_number}>
+              <Fade
+                in={true} // Always true to enable fading
+                timeout={300} // Match the timeout with the setTimeout in replaceBuddy
+              >
+                <Card
+                  sx={{
+                    borderRadius: '20px',
+                    boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.1)',
+                  }}
+                >
+                  <CardMedia
+                    component="img"
+                    height="300"
+                    width="300"
+                    image={getRandomImageByGender(buddy.gender)} // Assign a random image based on gender
+                    alt={buddy.full_name}
+                  />
+                  <CardContent>
+                    <Stack direction="row" alignItems="center" justifyContent="center" spacing={1}>
+                      <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#333', textAlign: 'center' }}>
+                        {buddy.full_name}, {buddy.age}
+                      </Typography>
+                      {buddy.gender.toLowerCase() === 'female' ? (
+                        <FemaleIcon sx={{ color: '#e91e63' }} />
+                      ) : (
+                        <MaleIcon sx={{ color: '#2196f3' }} />
+                      )}
+                    </Stack>
+                    <Stack direction="row" justifyContent="center" spacing={2} sx={{ mt: 1 }}>
+                      <Typography variant="body2" sx={{ color: '#666' }}>
+                        <strong>Height:</strong> {buddy.height} cm
+                      </Typography>
+                      <Typography variant="body2" sx={{ color: '#666' }}>
+                        <strong>Weight:</strong> {buddy.weight} kg
+                      </Typography>
+                      <Typography variant="body2" sx={{ color: '#666' }}>
+                        <strong>Preferred Workout Type:</strong> {buddy.workout_type}
+                      </Typography>
+                    </Stack>
+                    <Stack direction="row" justifyContent="center" spacing={2} sx={{ mt: 1 }}>
+                      <Typography variant="body2" sx={{ color: '#666' }}>
+                        <strong>VO2 Max:</strong> {buddy.VO2_max}
+                      </Typography>
+                      <Typography variant="body2" sx={{ color: '#666' }}>
+                        <strong>Body Fat:</strong> {buddy.body_fat}%
+                      </Typography>
+                    </Stack>
+                    <Stack direction="row" spacing={2} justifyContent="center" sx={{ mt: 2 }}>
+                      <Button
+                        variant="contained"
+                        color="error"
+                        startIcon={<CloseIcon />}
+                        onClick={() => handleDislikeRecommended(index)}
+                        sx={{
+                          borderRadius: '20px',
+                          textTransform: 'none',
+                        }}
+                      >
+                        Dislike
+                      </Button>
+                      <Button
+                        variant="contained"
+                        color="success"
+                        startIcon={<FavoriteIcon />}
+                        onClick={() => handleLikeRecommended(index)}
+                        sx={{
+                          borderRadius: '20px',
+                          textTransform: 'none',
+                        }}
+                      >
+                        Like
+                      </Button>
+                    </Stack>
+                  </CardContent>
+                </Card>
+              </Fade>
+            </Grid>
+            ))}
+          </Grid>
+        ) : (
+          <Typography variant="body1" sx={{ color: '#666', textAlign: 'center', mt: 2 }}>
+            No recommendations available at the moment.
+          </Typography>
+        )}
+      </Box>
+
       {/* Suggested Buddies Section */}
       <Box
         sx={{
@@ -303,7 +492,7 @@ const MainPage: React.FC = () => {
             mb: 2,
           }}
         >
-          Suggested Buddies
+          Similar To You
         </Typography>
         {currentBuddies.length > 0 ? (
           <Grid container spacing={3}>

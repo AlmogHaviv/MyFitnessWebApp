@@ -120,3 +120,22 @@ export const getUserById = async (userId: number) => {
     throw error;
   }
 };
+
+export const recommendBuddies = async (userId: string) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/recommend-buddies/${userId}`, {
+      method: 'GET',
+      headers: defaultHeaders,
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.detail || `Failed to recommend buddies: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error recommending buddies:', error);
+    throw error;
+  }
+};
