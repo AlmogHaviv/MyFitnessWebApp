@@ -24,7 +24,7 @@ class SVDRecommender:
 
     def recommend(self, user_id, top_n=10):
         if user_id not in self.user_index:
-            raise ValueError("User not in training set")
+            return None
         u_idx = self.user_index.get_loc(user_id)
         scores = np.dot(self.user_factors[u_idx], self.buddy_factors.T)
         top_indices = np.argsort(scores)[::-1][:top_n]

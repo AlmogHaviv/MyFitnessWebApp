@@ -163,6 +163,14 @@ async def recommend_buddies_endpoint(user_id: str):
 
         # Get the top 5 recommended buddy IDs
         recommended_buddy_ids = svd_recommender.recommend(user_id, top_n=5)
+        
+        # If user is not in the dataset, return empty list
+        if recommended_buddy_ids is None:
+            print(f"User {user_id} not found in SVD training set")
+            return {
+                "recommended_buddies": []
+            }
+            
         print(f"Recommended buddy IDs: {recommended_buddy_ids}")
 
         # Ensure IDs are in the correct format (e.g., integers if stored as integers in MongoDB)
@@ -192,7 +200,10 @@ async def recommend_buddies_endpoint(user_id: str):
                 recommended_buddies_data.append(buddy)
 
         if not recommended_buddies_data:
-            raise HTTPException(status_code=404, detail="No recommended buddies found")
+            print(f"No recommended buddies found for user {user_id}")
+            return {
+                "recommended_buddies": []
+            }
 
         print(f"Final recommended buddies data: {recommended_buddies_data}")
 

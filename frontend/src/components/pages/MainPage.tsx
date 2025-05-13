@@ -364,115 +364,111 @@ const MainPage: React.FC = () => {
         </Typography>
       </Box>
 
-      {/* Recommended Buddies Section */}
-      <Box
-        sx={{
-          boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.1)',
-          borderRadius: '20px',
-          p: 3,
-          mb: 4,
-          backgroundColor: '#fff',
-        }}
-      >
-        <Typography
-          variant="h4"
+      {/* Recommended Buddies Section - Only show if there are recommendations */}
+      {currentRecommendedBuddies.length > 0 && (
+        <Box
           sx={{
-            fontWeight: 'bold',
-            color: '#333',
-            mb: 2,
+            boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.1)',
+            borderRadius: '20px',
+            p: 3,
+            mb: 4,
+            backgroundColor: '#fff',
           }}
         >
-          Recommended Buddies
-        </Typography>
-        {currentRecommendedBuddies.length > 0 ? (
+          <Typography
+            variant="h4"
+            sx={{
+              fontWeight: 'bold',
+              color: '#333',
+              mb: 2,
+            }}
+          >
+            Recommended Buddies
+          </Typography>
           <Grid container spacing={3}>
             {currentRecommendedBuddies.map((buddy, index) => (
               <Grid item xs={12} sm={6} md={4} key={buddy.id_number}>
-              <Fade
-                in={true} // Always true to enable fading
-                timeout={300} // Match the timeout with the setTimeout in replaceBuddy
-              >
-                <Card
-                  sx={{
-                    borderRadius: '20px',
-                    boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.1)',
-                  }}
+                <Fade
+                  in={true} // Always true to enable fading
+                  timeout={300} // Match the timeout with the setTimeout in replaceBuddy
                 >
-                  <CardMedia
-                    component="img"
-                    height="300"
-                    width="300"
-                    image={getRandomImageByGender(buddy.gender)} // Assign a random image based on gender
-                    alt={buddy.full_name}
-                  />
-                  <CardContent>
-                    <Stack direction="row" alignItems="center" justifyContent="center" spacing={1}>
-                      <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#333', textAlign: 'center' }}>
-                        {buddy.full_name}, {buddy.age}
-                      </Typography>
-                      {buddy.gender.toLowerCase() === 'female' ? (
-                        <FemaleIcon sx={{ color: '#e91e63' }} />
-                      ) : (
-                        <MaleIcon sx={{ color: '#2196f3' }} />
-                      )}
-                    </Stack>
-                    <Stack direction="row" justifyContent="center" spacing={2} sx={{ mt: 1 }}>
-                      <Typography variant="body2" sx={{ color: '#666' }}>
-                        <strong>Height:</strong> {buddy.height} cm
-                      </Typography>
-                      <Typography variant="body2" sx={{ color: '#666' }}>
-                        <strong>Weight:</strong> {buddy.weight} kg
-                      </Typography>
-                      <Typography variant="body2" sx={{ color: '#666' }}>
-                        <strong>Preferred Workout Type:</strong> {buddy.workout_type}
-                      </Typography>
-                    </Stack>
-                    <Stack direction="row" justifyContent="center" spacing={2} sx={{ mt: 1 }}>
-                      <Typography variant="body2" sx={{ color: '#666' }}>
-                        <strong>VO2 Max:</strong> {buddy.VO2_max}
-                      </Typography>
-                      <Typography variant="body2" sx={{ color: '#666' }}>
-                        <strong>Body Fat:</strong> {buddy.body_fat}%
-                      </Typography>
-                    </Stack>
-                    <Stack direction="row" spacing={2} justifyContent="center" sx={{ mt: 2 }}>
-                      <Button
-                        variant="contained"
-                        color="error"
-                        startIcon={<CloseIcon />}
-                        onClick={() => handleDislikeRecommended(index)}
-                        sx={{
-                          borderRadius: '20px',
-                          textTransform: 'none',
-                        }}
-                      >
-                        Dislike
-                      </Button>
-                      <Button
-                        variant="contained"
-                        color="success"
-                        startIcon={<FavoriteIcon />}
-                        onClick={() => handleLikeRecommended(index)}
-                        sx={{
-                          borderRadius: '20px',
-                          textTransform: 'none',
-                        }}
-                      >
-                        Like
-                      </Button>
-                    </Stack>
-                  </CardContent>
-                </Card>
-              </Fade>
-            </Grid>
+                  <Card
+                    sx={{
+                      borderRadius: '20px',
+                      boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.1)',
+                    }}
+                  >
+                    <CardMedia
+                      component="img"
+                      height="300"
+                      width="300"
+                      image={getRandomImageByGender(buddy.gender)} // Assign a random image based on gender
+                      alt={buddy.full_name}
+                    />
+                    <CardContent>
+                      <Stack direction="row" alignItems="center" justifyContent="center" spacing={1}>
+                        <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#333', textAlign: 'center' }}>
+                          {buddy.full_name}, {buddy.age}
+                        </Typography>
+                        {buddy.gender.toLowerCase() === 'female' ? (
+                          <FemaleIcon sx={{ color: '#e91e63' }} />
+                        ) : (
+                          <MaleIcon sx={{ color: '#2196f3' }} />
+                        )}
+                      </Stack>
+                      <Stack direction="row" justifyContent="center" spacing={2} sx={{ mt: 1 }}>
+                        <Typography variant="body2" sx={{ color: '#666' }}>
+                          <strong>Height:</strong> {buddy.height} cm
+                        </Typography>
+                        <Typography variant="body2" sx={{ color: '#666' }}>
+                          <strong>Weight:</strong> {buddy.weight} kg
+                        </Typography>
+                        <Typography variant="body2" sx={{ color: '#666' }}>
+                          <strong>Preferred Workout Type:</strong> {buddy.workout_type}
+                        </Typography>
+                      </Stack>
+                      <Stack direction="row" justifyContent="center" spacing={2} sx={{ mt: 1 }}>
+                        <Typography variant="body2" sx={{ color: '#666' }}>
+                          <strong>VO2 Max:</strong> {buddy.VO2_max}
+                        </Typography>
+                        <Typography variant="body2" sx={{ color: '#666' }}>
+                          <strong>Body Fat:</strong> {buddy.body_fat}%
+                        </Typography>
+                      </Stack>
+                      <Stack direction="row" spacing={2} justifyContent="center" sx={{ mt: 2 }}>
+                        <Button
+                          variant="contained"
+                          color="error"
+                          startIcon={<CloseIcon />}
+                          onClick={() => handleDislikeRecommended(index)}
+                          sx={{
+                            borderRadius: '20px',
+                            textTransform: 'none',
+                          }}
+                        >
+                          Dislike
+                        </Button>
+                        <Button
+                          variant="contained"
+                          color="success"
+                          startIcon={<FavoriteIcon />}
+                          onClick={() => handleLikeRecommended(index)}
+                          sx={{
+                            borderRadius: '20px',
+                            textTransform: 'none',
+                          }}
+                        >
+                          Like
+                        </Button>
+                      </Stack>
+                    </CardContent>
+                  </Card>
+                </Fade>
+              </Grid>
             ))}
           </Grid>
-        ) : (
-          <Typography variant="body1" sx={{ color: '#666', textAlign: 'center', mt: 2 }}>
-            No recommendations available at the moment.
-          </Typography>
-        )}
-      </Box>
+        </Box>
+      )}
 
       {/* Suggested Buddies Section */}
       <Box
