@@ -24,6 +24,8 @@ import FemaleIcon from '@mui/icons-material/Female';
 import { getSimilarUsers, recommendBuddies, logEvent } from '../../services/api';
 import { getSuggestedExercises, Exercise, getSuggestedEquipment } from '../../services/exerciseService';
 import { getRandomImageByGender } from '../../services/imageStock';
+import Menu from '@mui/material/Menu';
+import MenuItem from '@mui/material/MenuItem';
 
 interface Buddy {
   id_number: number;
@@ -69,6 +71,15 @@ const MainPage: React.FC = () => {
 
   const [userData, setUserData] = useState<any>(null);
   const [animationDirection, setAnimationDirection] = useState<'left' | 'right' | null>(null);
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+
+  const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -324,12 +335,80 @@ const MainPage: React.FC = () => {
             sx={{
               fontWeight: 'bold',
               color: '#333',
+              cursor: 'pointer',
             }}
+            onClick={handleMenuOpen} // Open dropdown menu on click
           >
-            Welcome {userData.full_name}!
+            Welcome {userData.full_name}
           </Typography>
         </Box>
       )}
+
+      {/* User Details Dropdown Menu */}
+      <Menu
+        anchorEl={anchorEl}
+        open={Boolean(anchorEl)}
+        onClose={handleMenuClose}
+        anchorOrigin={{
+          vertical: 'bottom',
+          horizontal: 'left',
+        }}
+        transformOrigin={{
+          vertical: 'top',
+          horizontal: 'left',
+        }}
+      >
+        <MenuItem>
+          <Typography variant="body1">
+            <strong>Full Name:</strong> {userData.full_name}
+          </Typography>
+        </MenuItem>
+        <MenuItem>
+          <Typography variant="body1">
+            <strong>Age:</strong> {userData.age}
+          </Typography>
+        </MenuItem>
+        <MenuItem>
+          <Typography variant="body1">
+            <strong>Gender:</strong> {userData.gender}
+          </Typography>
+        </MenuItem>
+        <MenuItem>
+          <Typography variant="body1">
+            <strong>Height:</strong> {userData.height} cm
+          </Typography>
+        </MenuItem>
+        <MenuItem>
+          <Typography variant="body1">
+            <strong>Weight:</strong> {userData.weight} kg
+          </Typography>
+        </MenuItem>
+        <MenuItem>
+          <Typography variant="body1">
+            <strong>Daily Calories Intake:</strong> {userData.daily_calories_intake}
+          </Typography>
+        </MenuItem>
+        <MenuItem>
+          <Typography variant="body1">
+            <strong>Resting Heart Rate:</strong> {userData.resting_heart_rate}
+          </Typography>
+        </MenuItem>
+        <MenuItem>
+          <Typography variant="body1">
+            <strong>VO2 Max:</strong> {userData.VO2_max}
+          </Typography>
+        </MenuItem>
+        <MenuItem>
+          <Typography variant="body1">
+            <strong>Body Fat:</strong> {userData.body_fat}%
+          </Typography>
+        </MenuItem>
+        <MenuItem>
+          <Typography variant="body1">
+            <strong>Preferred Workout Type:</strong> {userData.workout_type}
+          </Typography>
+        </MenuItem>
+      </Menu>
 
       <Box
         sx={{
