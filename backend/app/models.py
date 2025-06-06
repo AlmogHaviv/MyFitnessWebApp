@@ -84,3 +84,8 @@ class UserEvent(BaseModel):
     buddy_id: str
     action: str  # "like" or "dislike"
     timestamp: datetime = datetime.utcnow()
+
+class WorkoutRecommendationEvent(BaseModel):
+    user_id: str
+    workout_urls_and_explanations: dict[str, dict[str, str]]
+    relevant_equipment: dict[str, str]
