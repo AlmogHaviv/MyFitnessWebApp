@@ -74,18 +74,18 @@ class SimilarUsersResponse(BaseModel):
     similar_users: List[Dict]
 
 
-class WorkoutRecommendation(BaseModel):
-    recommended_workouts: List[Dict]
-    confidence_score: float
-
-
 class UserEvent(BaseModel):
     user_id: str
     buddy_id: str
     action: str  # "like" or "dislike"
     timestamp: datetime = datetime.utcnow()
 
+
+class WorkoutRecommendation(BaseModel):
+    url: str
+    explanation: str 
+    equipment: List[str] 
+
+
 class WorkoutRecommendationEvent(BaseModel):
-    user_id: str
-    workout_urls_and_explanations: dict[str, dict[str, str]]
-    relevant_equipment: dict[str, str]
+    workout_recommendations: List[WorkoutRecommendation] 

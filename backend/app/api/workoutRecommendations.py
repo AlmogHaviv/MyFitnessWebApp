@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Query
 from app.models import UserProfile, WorkoutRecommendationEvent
 from app.database import users_collection, workout_collection
-from models_training_pipeline.workout_recommender import WorkoutRecommender
+from models_training_pipeline.llm_workout_recs.llm_workout_recs import WorkoutRecommender
 
 router = APIRouter()
 
@@ -12,7 +12,7 @@ async def find_best_workout_recommendation(
 ) -> WorkoutRecommendationEvent:
     """
     Recommend the best workout(s) for a user based on their profile and a query.
-    This is a placeholder endpoint; the recommendation logic will be implemented later.
+    Returns a list of workout recommendations with URLs, explanations, and required equipment.
     """
     try:
         # Log received data for debugging
@@ -30,11 +30,13 @@ async def find_best_workout_recommendation(
             'body_fat': user_profile.body_fat
         }
         
+        # Initialize the recommender and get recommendations
         workout_recommender = WorkoutRecommender(profile_dict, query)
+        recommendations = workout_recommender.workout_urls_and_explanations()
 
+        # Create the response event
         return WorkoutRecommendationEvent(
-            workout_urls_and_explanations=workout_recommender.workout_urls_and_explanations(),
-            relevant_equipment=workout_recommender.relevant_equipment()
+            workout_recommendations=recommendations
         )
 
     except Exception as e:
