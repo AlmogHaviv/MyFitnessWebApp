@@ -15,7 +15,7 @@ def train_and_save_model():
     try:
         # # block of code to generate random names, bmi, vo2_max and body fat and id_numbers
         # # Load the real data
-        # df = pd.read_csv('data/workout_fitness_tracker_data.csv')
+        df = pd.read_csv('data/workout_fitness_tracker_data.csv')
 
         # # Generate random names based on gender
         # male_names = ['James', 'John', 'Robert', 'Michael', 'William', 'David', 'Richard', 'Joseph', 'Thomas', 'Charles',
@@ -52,52 +52,86 @@ def train_and_save_model():
         # df['full_name'] = df.apply(lambda row: f"{random.choice(male_names)} {random.choice(last_names)}" if row['gender'] == 'Male'
         #                           else f"{random.choice(female_names)} {random.choice(last_names)}" if row['gender'] == 'Female'
         #                           else f"{random.choice(other_names)} {random.choice(last_names)}", axis=1)
-        
-        # # Add BMI column
-        # height_in_meters = df['height'] / 100
-        # df['bmi'] = (df['weight'] / (height_in_meters ** 2)).round(1)
 
-        # # Adjust body fat based on BMI
-        # for index, row in df.iterrows():
-        #     bmi = row['bmi']
-        #     if bmi < 18.5:
-        #         df.at[index, 'body_fat'] = random.uniform(5, 12)
-        #     elif 18.5 <= bmi <= 24.9:
-        #         df.at[index, 'body_fat'] = random.uniform(9, 18)
-        #     elif 25.0 <= bmi <= 29.9:
-        #         df.at[index, 'body_fat'] = random.uniform(15, 25)
-        #     else: # BMI >= 30
-        #         df.at[index, 'body_fat'] = random.uniform(23, 45)
-        # df['body_fat'] = df['body_fat'].round(1)
+        def calculate_bmi(weight, height_cm):
+            height_m = height_cm / 100
+            return round(weight / (height_m ** 2), 1)
 
-        # # Adjust VO2 max values
-        # for index, row in df.iterrows():
-        #     age = row['age']
-        #     gender = row['gender']
-        #     rhr = row['resting_heart_rate']
-        #     intensity = row['workout_intensity']
-            
-        #     max_hr = 220 - age
-        #     base_vo2 = 15 * (max_hr / rhr)
-            
-        #     if gender.lower() == 'female':
-        #         base_vo2 *= 0.9
-            
-        #     intensity_factor = {
-        #         'Low': 0.85,
-        #         'Medium': 1.0,
-        #         'High': 1.15
-        #     }
-        #     base_vo2 *= intensity_factor.get(intensity, 1.0)
-            
-        #     variation = random.uniform(0.95, 1.05)
-        #     final_vo2 = base_vo2 * variation
-        #     final_vo2 = max(20, min(80, final_vo2))
-        #     df.at[index, 'VO2_max'] = round(final_vo2, 1)
+        def estimate_body_fat(bmi, age, gender):
+            if gender == 'Male':
+                body_fat = 1.15 * bmi + 0.20 * age - 17.0
+            elif gender == 'Female':
+                body_fat = 1.15 * bmi + 0.20 * age - 6.0
+            else:
+                body_fat = 1.15 * bmi + 0.20 * age - 11.5
+            return round(min(max(body_fat, 5), 45), 1)
 
-        # # Save updated data back to CSV
-        # df.to_csv('data/workout_fitness_tracker_data.csv', index=False)
-        # processed_df = df.copy()
+        def estimate_vo2_max(age, rhr, gender, intensity):
+            max_hr = 220 - age
+            base_vo2 = 15 * (max_hr / rhr)
+
+            if gender.lower() == 'female':
+                base_vo2 *= 0.9
+            elif gender.lower() == 'other':
+                base_vo2 *= 0.95
+
+            intensity_factor = {'Low': 0.85, 'Medium': 1.0, 'High': 1.15}
+            base_vo2 *= intensity_factor.get(intensity, 1.0)
+            base_vo2 *= random.uniform(0.95, 1.05)
+
+            return round(min(max(base_vo2, 20), 80), 1)
+
+        # Ensure float dtype
+        df['weight'] = df['weight'].astype(float)
+
+        # Generate realistic weight → derive BMI, body fat, VO2
+        for index, row in df.iterrows():
+            height_m = row['height'] / 100
+
+            # Generate a realistic weight from BMI ~ N(24, 3)
+            target_bmi = np.clip(np.random.normal(loc=24, scale=3), 18.5, 32)
+            weight = round(target_bmi * (height_m ** 2), 1)
+
+            df.at[index, 'weight'] = weight
+            df.at[index, 'bmi'] = calculate_bmi(weight, row['height'])
+
+            body_fat = estimate_body_fat(df.at[index, 'bmi'], row['age'], row['gender'])
+            df.at[index, 'body_fat'] = body_fat
+
+            vo2_max = estimate_vo2_max(
+                age=row['age'],
+                rhr=row['resting_heart_rate'],
+                gender=row['gender'],
+                intensity=row['workout_intensity']
+            )
+            df.at[index, 'VO2_max'] = vo2_max
+
+        # Save it
+        df.to_csv('data/workout_fitness_tracker_data_updated.csv', index=False)
+        print("Data updated and saved.")
+
+        # Print descriptive statistics for key health columns
+        print("\n=== Descriptive Statistics ===")
+        print(df[['age', 'height', 'weight', 'bmi', 'VO2_max', 'body_fat']].describe())
+
+        # Value counts for categorical columns
+        print("\n=== Workout Intensity Distribution ===")
+        print(df['workout_intensity'].value_counts())
+
+        print("\n=== Gender Distribution ===")
+        print(df['gender'].value_counts())
+
+        print("\n=== Mood Before Workout Distribution ===")
+        print(df['mood_before_workout'].value_counts())
+
+        print("\n=== Mood After Workout Distribution ===")
+        print(df['mood_after_workout'].value_counts())
+
+        # Correlation between BMI and body fat, and BMI vs. VO2 max
+        print("\n=== Correlation Matrix (Health Metrics) ===")
+        print(df[['bmi', 'body_fat', 'VO2_max']].corr())
+
+
 
         logger.info("Initializing recommender system...")
         recommender = UserRecommender()
@@ -105,7 +139,7 @@ def train_and_save_model():
         # Training the model
         logger.info("Training model...")
         # Get the absolute path to the project root directory
-        csv_path = os.path.join('data', 'workout_fitness_tracker_data.csv')
+        csv_path = os.path.join('data', 'workout_fitness_tracker_data_updated.csv')
         recommender.train(csv_path)
 
         # Save the model after training
@@ -115,12 +149,12 @@ def train_and_save_model():
          # Load dataset
         df = pd.read_csv('data/workout_fitness_tracker_data.csv')
 
-        # Visualize clusters
-        logger.info("Visualizing clusters...")
-        df = pd.read_csv(csv_path)
-        df_with_clusters = recommender.analyze_clusters(df)
-        recommender.plot_box_by_cluster(df_with_clusters, feature='age')
-        recommender.plot_clusters(df)
+        # # Visualize clusters
+        # logger.info("Visualizing clusters...")
+        # df = pd.read_csv(csv_path)
+        # df_with_clusters = recommender.analyze_clusters(df)
+        # recommender.plot_box_by_cluster(df_with_clusters, feature='age')
+        # recommender.plot_clusters(df)
 
         # Define a sample user profile for finding similar users
         user_profile = {
@@ -133,7 +167,8 @@ def train_and_save_model():
             'daily_calories_intake': 2500,
             'resting_heart_rate': 65,
             'VO2_max': 45,
-            'body_fat': 15
+            'body_fat': 15,
+            'bmi': 40
         }
 
         # Finding similar users
@@ -166,6 +201,8 @@ def test_loaded_model():
         test_recommender = UserRecommender()
         test_recommender.load_model()
         logger.info("Model loaded successfully!")
+        df = pd.read_csv('data/workout_fitness_tracker_data_updated.csv')
+        test_recommender.explore_data(df, n_clusters=3)
 
         # Test with the same user profile
         test_profile = {
@@ -178,7 +215,8 @@ def test_loaded_model():
             'daily_calories_intake': 2500,
             'resting_heart_rate': 65,
             'VO2_max': 45,
-            'body_fat': 15
+            'body_fat': 15,
+            'bmi' : 23
         }
 
         logger.info("Testing inference with loaded model...")

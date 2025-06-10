@@ -1,12 +1,12 @@
 from sklearn.preprocessing import StandardScaler, LabelEncoder
 from sklearn.neighbors import NearestNeighbors
+from sklearn.decomposition import PCA
 from sklearn.cluster import KMeans
+import matplotlib.pyplot as plt
+import seaborn as sns
 import pandas as pd
 import os
 import joblib
-import matplotlib.pyplot as plt
-import seaborn as sns
-from sklearn.decomposition import PCA
 
 class UserRecommender:
     def __init__(self):
@@ -38,6 +38,26 @@ class UserRecommender:
             processed_df[numerical_features]
         )
 
+        # Adjust feature weights based on correlation strength:
+        # - Gender has a weak correlation, so assign a low weight (0.3)
+        # - VO2_max and resting_heart_rate are more important (1.2)
+        # - Body fat and BMI moderately important (0.9)
+        weights = {
+            'age': 1.0,
+            'gender': 0.3,  # weak correlation, less influence
+            'height': 0.5,  # weak correlation, less influence
+            'daily_calories_intake': 1.0,
+            'resting_heart_rate': 1.2,
+            'VO2_max': 1.2,
+            'body_fat': 0.9,
+            'bmi': 0.9
+        }
+
+        # Apply weights to scaled features
+        for col in self.feature_columns:
+            if col in numerical_features or col == 'gender':
+                processed_df[col] = processed_df[col] * weights.get(col, 1.0)
+
         return processed_df[self.feature_columns]
 
     def train(self, data_path):
@@ -50,106 +70,17 @@ class UserRecommender:
         # Preprocess with fitting
         processed_data = self.preprocess_data(df, fit=True)
 
-        # Train KNN
-        self.model = NearestNeighbors(n_neighbors=15, metric='euclidean')
+        # Use cosine distance because:
+        # "Cosine similarity focuses on the orientation of vectors rather than their magnitude,
+        #  which helps in comparing user profiles that may differ in scale but have similar patterns."
+        self.model = NearestNeighbors(n_neighbors=15, metric='cosine')
         self.model.fit(processed_data)
-
-        #  # KMeans Clustering (assuming 3 clusters, but you can adjust this)
-        # self.kmeans = KMeans(n_clusters=3)
-        # df['cluster'] = self.kmeans.fit_predict(processed_data)
-
-        # Save model and preprocessing tools
+        
         self.save_model()
-
-    # def analyze_clusters(self, df: pd.DataFrame):
-    #     if not hasattr(self, 'kmeans'):
-    #         raise ValueError("KMeans model not loaded. Run train() or load_model() first.")
-
-    #     # Preprocess input
-    #     processed_df = self.preprocess_data(df, fit=False)
-
-    #     # Predict cluster labels
-    #     df['cluster'] = self.kmeans.predict(processed_df)
-
-    #     # Identify existing numerical and categorical features
-    #     numeric_features = [col for col in ['age', 'height', 'weight', 'experience', 'frequency'] if col in df.columns]
-    #     categorical_features = [col for col in ['gender', 'goal'] if col in df.columns]
-
-    #     # Numerical summary
-    #     numeric_summary = df.groupby('cluster')[numeric_features].mean()
-
-    #     # Categorical summary
-    #     categorical_summary = df.groupby('cluster')[categorical_features].agg(lambda x: x.mode().iloc[0])
-
-    #     # Combine summaries
-    #     cluster_profiles = pd.concat([numeric_summary, categorical_summary], axis=1)
-
-    #     print("\n--- Cluster Profiles ---")
-    #     print(cluster_profiles)
-
-    #     print("\n--- Cluster Interpretations ---")
-    #     for cluster_id, row in cluster_profiles.iterrows():
-    #         description = f"Cluster {cluster_id}:"
-
-    #         if 'gender' in row and 'goal' in row:
-    #             description += f" Predominantly {row['gender']}s aiming for {row['goal']}."
-
-    #         if 'age' in row:
-    #             description += f"\n  Avg Age: {row['age']:.1f}"
-    #         if 'height' in row:
-    #             description += f", Height: {row['height']:.1f} cm"
-    #         if 'weight' in row:
-    #             description += f", Weight: {row['weight']:.1f} kg"
-    #         if 'experience' in row:
-    #             description += f"\n  Experience: {row['experience']:.1f} yrs"
-    #         if 'frequency' in row:
-    #             description += f", Frequency: {row['frequency']:.1f} times/week"
-
-    #         print(description)
-
-    #     return df
-
-    
-    # def plot_box_by_cluster(self, df: pd.DataFrame, feature: str = 'age'):
-    #     if 'cluster' not in df.columns:
-    #         raise ValueError("DataFrame must include a 'cluster' column. Run analyze_clusters first.")
-
-    #     plt.figure(figsize=(8, 6))
-    #     sns.boxplot(x='cluster', y=feature, data=df)
-    #     plt.title(f"{feature.capitalize()} Distribution by Cluster")
-    #     plt.xlabel("Cluster")
-    #     plt.ylabel(feature.capitalize())
-    #     plt.tight_layout()
-    #     plt.show()
-    
-    # def plot_clusters(self, df):
-    #     """Visualize the clusters using PCA after preprocessing."""
-    #     # Preprocess data (use fit=False because we're reusing the trained scaler and encoder)
-    #     processed_df = self.preprocess_data(df, fit=False)
-
-    #     # Perform PCA to reduce to 2D for visualization
-    #     pca = PCA(n_components=2)
-    #     pca_components = pca.fit_transform(processed_df)
-
-    #     # Add PCA components and cluster labels to the original dataframe
-    #     df['PCA1'] = pca_components[:, 0]
-    #     df['PCA2'] = pca_components[:, 1]
-    #     df['cluster'] = self.kmeans.predict(processed_df)  # use same kmeans model
-
-    #     # Plotting the clusters
-    #     plt.figure(figsize=(10, 6))
-    #     sns.scatterplot(x='PCA1', y='PCA2', hue='cluster', palette='Set1', data=df, s=100, edgecolor='k')
-    #     plt.title("PCA - Clusters of Users")
-    #     plt.xlabel("PCA Component 1")
-    #     plt.ylabel("PCA Component 2")
-    #     plt.legend(title="Cluster")
-    #     plt.show()
 
     
     def find_similar_users(self, user_profile):
         """Find similar users using the KNN model."""
-        height_in_meters = user_profile['height'] / 100
-        user_profile['bmi'] = round(user_profile['weight'] / (height_in_meters ** 2), 1)
         
         profile_df = pd.DataFrame([user_profile])
         processed_profile = self.preprocess_data(profile_df, fit=False)
@@ -176,3 +107,36 @@ class UserRecommender:
         self.scaler = joblib.load('models/scaler.joblib')
         self.label_encoder = joblib.load('models/label_encoder.joblib')
         self.user_ids = joblib.load('models/user_ids.pkl')
+
+    def explore_data(self, df, n_clusters=3):
+        """
+        Explore the dataset by performing PCA for dimensionality reduction and KMeans clustering,
+        then visualizing the clusters on a 2D scatter plot.
+
+        Parameters:
+        - df: pandas DataFrame with raw data
+        - n_clusters: number of clusters for KMeans (default=4)
+        """
+        # Preprocess without fitting (assumes scaler/encoder already fit)
+        processed_data = self.preprocess_data(df, fit=False)
+
+        # PCA to reduce to 2D
+        pca = PCA(n_components=2)
+        pca_result = pca.fit_transform(processed_data)
+
+        # KMeans clustering on processed data
+        kmeans = KMeans(n_clusters=n_clusters, random_state=42)
+        cluster_labels = kmeans.fit_predict(processed_data)
+
+        # Plot
+        plt.figure(figsize=(10, 7))
+        sns.scatterplot(
+            x=pca_result[:, 0], y=pca_result[:, 1],
+            hue=cluster_labels,
+            palette='Set2',
+            legend='full'
+        )
+        plt.title(f'PCA Visualization with {n_clusters} Clusters')
+        plt.xlabel('PCA Component 1')
+        plt.ylabel('PCA Component 2')
+        plt.show()

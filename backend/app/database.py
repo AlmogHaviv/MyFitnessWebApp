@@ -44,76 +44,49 @@ async def test_connection():
 # - VO2_max: float
 # - body_fat: float
 
-# async def upload_data_to_mongo():
-#     try:
-#         # Read the CSV file using the absolute path
-#         csv_path = os.path.join(PROJECT_ROOT, 'data', 'workout_fitness_tracker_data.csv')
-#         df = pd.read_csv(csv_path)
+async def upload_data_to_mongo():
+    try:
+        # Read the CSV file using the absolute path
+        csv_path = os.path.join(PROJECT_ROOT, 'backend\models_training_pipeline\knn\data', 'workout_fitness_tracker_data_updated.csv')
+        df = pd.read_csv(csv_path)
         
-#         # Convert DataFrame records to list of dictionaries
-#         records = df.to_dict('records')
+        # Convert DataFrame records to list of dictionaries
+        records = df.to_dict('records')
         
-#         # Process each record to match the UserProfile model structure
-#         processed_records = []
-#         for record in records:
-#             # Extract only the fields that match our UserProfile model
-#             user_record = {
-#                 "age": record["age"],
-#                 "full_name": record["full_name"],
-#                 "id_number": record["id_number"], 
-#                 "gender": record["gender"],
-#                 "height": record["height"],
-#                 "weight": record["weight"],
-#                 "daily_calories_intake": record["daily_calories_intake"],
-#                 "resting_heart_rate": record["resting_heart_rate"],
-#                 "VO2_max": record["VO2_max"],
-#                 "body_fat": record["body_fat"]
-#             }
-#             processed_records.append(user_record)
+        # Process each record to match the UserProfile model structure
+        processed_records = []
+        for record in records:
+            # Extract only the fields that match our UserProfile model
+            user_record = {
+                "age": record["age"],
+                "full_name": record["full_name"],
+                "id_number": record["id_number"], 
+                "gender": record["gender"],
+                "height": record["height"],
+                "weight": record["weight"],
+                "daily_calories_intake": record["daily_calories_intake"],
+                "resting_heart_rate": record["resting_heart_rate"],
+                "VO2_max": record["VO2_max"],
+                "body_fat": record["body_fat"],
+                "bmi": record["bmi"],
+            }
+            processed_records.append(user_record)
 
-#         # Insert the processed records into MongoDB
-#         result = await users_collection.insert_many(processed_records)
-#         print(f"Successfully uploaded {len(result.inserted_ids)} records to MongoDB")
-#         return True
+        # Insert the processed records into MongoDB
+        result = await users_collection.insert_many(processed_records)
+        print(f"Successfully uploaded {len(result.inserted_ids)} records to MongoDB")
+        return True
 
-#     except Exception as e:
-#         print(f"Error uploading data to MongoDB: {e}")
-#         return False
-
-# async def upload_data_to_mongo():
-#     try:
-#         # Read the CSV file using the absolute path
-#         csv_path = os.path.join(PROJECT_ROOT, 'data', 'workout_fitness_tracker_data.csv')
-#         df = pd.read_csv(csv_path)
-        
-#         # Convert DataFrame records to list of dictionaries
-#         records = df.to_dict('records')
-        
-#         # Process each record to match the UserProfile model structure
-#         processed_records = []
-#         for record in records:
-#             # Extract only the fields that match our UserProfile model
-#             user_record = {
-#                 "id_number": record["id_number"], 
-#                 "workout_type": record["workout_type"]
-#             }
-#             processed_records.append(user_record)
-
-#         # Insert the processed records into MongoDB
-#         result = await workout_collection.insert_many(processed_records)
-#         print(f"Successfully uploaded {len(result.inserted_ids)} records to MongoDB")
-#         return True
-
-#     except Exception as e:
-#         print(f"Error uploading data to MongoDB: {e}")
-#         return False
+    except Exception as e:
+        print(f"Error uploading data to MongoDB: {e}")
+        return False
     
-# async def main():
-#     success = await upload_data_to_mongo()
-#     if success:
-#         print("Data upload completed successfully!")
-#     else:
-#         print("Data upload failed!")
+async def main():
+    success = await upload_data_to_mongo()
+    if success:
+        print("Data upload completed successfully!")
+    else:
+        print("Data upload failed!")
 
 # if __name__ == "__main__":
 #     asyncio.run(main())

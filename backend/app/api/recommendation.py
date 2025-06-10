@@ -33,7 +33,8 @@ async def find_similar_users(user_profile: UserProfile) -> SimilarUsersResponse:
             'daily_calories_intake': user_profile.daily_calories_intake,
             'resting_heart_rate': user_profile.resting_heart_rate,
             'VO2_max': user_profile.VO2_max,
-            'body_fat': user_profile.body_fat
+            'body_fat': user_profile.body_fat,
+            'bmi': user_profile.bmi
         }
         
         # Find similar users using the recommender (get 10 users)

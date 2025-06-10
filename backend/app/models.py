@@ -10,11 +10,12 @@ class UserProfile(BaseModel):
     id_number: int 
     gender: str
     height: int
-    weight: int
+    weight: float
     daily_calories_intake: int
     resting_heart_rate: int
     VO2_max: float
     body_fat: float
+    bmi: float
 
     class Config:
         validate_by_name = True  # Pydantic v2 replacement for allow_population_by_field_name
