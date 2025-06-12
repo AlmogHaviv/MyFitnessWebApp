@@ -62,5 +62,13 @@ This will verify that your authentication works and that the model (declare-lab/
 
 Note: If you're running in an environment that does not allow direct downloads or model hosting (e.g., restricted servers), you may need to manually download and cache the model beforehand.
 
+## 8. Set Up OpenRouter API (for LLM Usage in the workout reccomeder)
+
+You need to:
+
+1. Create a free account at [OpenRouter](https://openrouter.ai/)
+2. Generate an API key from your OpenRouter dashboard
+3. Add the API key to the models_training_pipeline\llm_workout_recs\llm_model_open_ai_api.py as an input - change the dummy string
+
 Now you're ready to build and extend the backend! 🚀
 

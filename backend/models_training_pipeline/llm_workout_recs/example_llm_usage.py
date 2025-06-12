@@ -1,4 +1,4 @@
-from llm_workout_recs import WorkoutRecommender
+from backend.models_training_pipeline.llm_workout_recs.llm_model_open_ai_api import WorkoutRecommender
 
 def main():
     recommender = WorkoutRecommender(
