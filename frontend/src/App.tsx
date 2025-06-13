@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import LandingPage from './components/pages/LandingPage';
 import MainPage from './components/pages/MainPage';
 import LoginPage from './components/pages/LoginPage';
+import RecommendationsPage from './components/pages/RecommendationsPage';
 import './App.css';
 
 function App() {
@@ -13,6 +14,7 @@ function App() {
           <Route path="/" element={<LoginPage />} />
           <Route path="/land" element={<LandingPage />} />
           <Route path="/main" element={<MainPage />} />
+          <Route path="/recommendations" element={<RecommendationsPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </div>

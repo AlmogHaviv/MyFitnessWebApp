@@ -13,6 +13,9 @@ import {
   Chip,
   Stack,
   Grid,
+  Paper,
+  TextField,
+  IconButton,
 } from '@mui/material';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import CloseIcon from '@mui/icons-material/Close';
@@ -21,6 +24,7 @@ import Slide from '@mui/material/Slide';
 import Fade from '@mui/material/Fade';
 import MaleIcon from '@mui/icons-material/Male';
 import FemaleIcon from '@mui/icons-material/Female';
+import SendIcon from '@mui/icons-material/Send';
 import { getSimilarUsers, recommendBuddies, logEvent } from '../../services/api';
 import { getSuggestedExercises, Exercise, getSuggestedEquipment } from '../../services/exerciseService';
 import { getRandomImageByGender } from '../../services/imageStock';
@@ -54,6 +58,7 @@ const MainPage: React.FC = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [fitnessQuery, setFitnessQuery] = useState(''); // State for fitness query
 
   // States for "Similar Buddies"
   const [buddies, setBuddies] = useState<Buddy[]>([]);
@@ -439,8 +444,84 @@ const MainPage: React.FC = () => {
             color: '#666',
           }}
         >
-          Find your perfect workout buddy
+          Find your perfect personalized fitness experience
         </Typography>
+      </Box>
+
+      {/* Fitness Goal  - Query Input Section */}
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          mb: 3,
+          mt: 2,
+        }}
+      >
+        <Paper
+          elevation={3}
+          sx={{
+            p: 3,
+            borderRadius: '16px',
+            backgroundColor: '#ffff',
+            boxShadow: '0px 4px 10px rgba(0,0,0,0.08)',
+            width: { xs: 800, sm: 1500, md: 1500 },
+          }}
+        >
+          <Box sx={{ width: '100%', display: 'flex', justifyContent: 'center', mb: 2 }}>
+            <Typography
+              variant="h5"
+              sx={{
+                fontWeight: 600,
+                color: '#333',
+                textAlign: 'center',
+              }}
+            >
+              What is your fitness goal?
+            </Typography>
+          </Box>
+          <Box
+            sx={{
+              width: '100%',
+              display: 'flex',
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 2,
+            }}
+          >
+            <TextField
+              fullWidth
+              placeholder="e.g. I want to get better at pushups"
+              value={fitnessQuery}
+              onChange={e => setFitnessQuery(e.target.value)}
+              variant="outlined"
+              size="small"
+              sx={{
+                backgroundColor: '#fff',
+                borderRadius: '8px',
+              }}
+              InputProps={{
+                style: { fontSize: '0.95rem', padding: '6px 10px', height: 36 },
+                endAdornment: (
+                  <IconButton
+                    color="primary"
+                    disabled={!fitnessQuery.trim()}
+                    onClick={() => {
+                      localStorage.setItem('fitnessQuery', fitnessQuery);
+                      navigate('/recommendations');
+                    }}
+                    sx={{
+                      borderRadius: '50%',
+                      ml: 1,
+                    }}
+                  >
+                    <SendIcon />
+                  </IconButton>
+                ),
+              }}
+            />
+          </Box>
+        </Paper>
       </Box>
 
       {/* Recommended Buddies Section - Only show if there are recommendations */}
@@ -455,14 +536,14 @@ const MainPage: React.FC = () => {
           }}
         >
           <Typography
-            variant="h4"
+            variant="h5"
             sx={{
               fontWeight: 'bold',
               color: '#333',
               mb: 2,
             }}
           >
-            Recommended Buddies
+            Recommended Fitness Buddies
           </Typography>
           <Grid container spacing={3}>
             {currentRecommendedBuddies.map((buddy, index) => (
@@ -560,14 +641,14 @@ const MainPage: React.FC = () => {
         }}
       >
         <Typography
-          variant="h4"
+          variant="h5"
           sx={{
             fontWeight: 'bold',
             color: '#333',
             mb: 2,
           }}
         >
-          Similar To You
+          Similar Fitness Buddies
         </Typography>
         {currentBuddies.length > 0 ? (
           <Grid container spacing={3}>
@@ -670,7 +751,7 @@ const MainPage: React.FC = () => {
         }}
       >
         <Typography
-          variant="h4"
+          variant="h5"
           sx={{
             fontWeight: 'bold',
             color: '#333',
@@ -720,7 +801,7 @@ const MainPage: React.FC = () => {
         }}
       >
         <Typography
-          variant="h4"
+          variant="h5"
           sx={{
             fontWeight: 'bold',
             color: '#333',

@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
-from app.api import user, recommendation
+from app.api import user, recommendation, workoutRecommendations
 from app.database import test_connection
 
 @asynccontextmanager
@@ -26,3 +26,4 @@ app.add_middleware(
 # Include the routers from the different modules
 app.include_router(user.router)
 app.include_router(recommendation.router)
+app.include_router(workoutRecommendations.router)

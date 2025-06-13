@@ -162,7 +162,7 @@ const LandingPage: React.FC = () => {
           Welcome to Gymder
         </Typography>
         <Typography className="landing-subtitle">
-          Find your perfect workout buddy
+          Find your perfect personalized fitness experience
         </Typography>
       </Box>
 
