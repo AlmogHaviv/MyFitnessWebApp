@@ -32,6 +32,7 @@ interface UserProfile {
   VO2_max: number;
   body_fat: number;
   workout_type: string;
+  bmi: number;
   [key: string]: string | number;
 }
 
@@ -49,6 +50,7 @@ const LandingPage: React.FC = () => {
     VO2_max: 0,
     body_fat: 0,
     workout_type: '',
+    bmi: 0,
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -81,6 +83,9 @@ const LandingPage: React.FC = () => {
       }
 
       // Convert and validate data types
+      const heightM = Number(formData.height) / 100;
+      const bmi = Number(formData.weight) / (heightM * heightM);
+
       const userProfileData = {
         full_name: formData.full_name.trim(),
         age: Math.floor(Number(formData.age)),
@@ -91,7 +96,8 @@ const LandingPage: React.FC = () => {
         daily_calories_intake: Math.floor(Number(formData.daily_calories_intake)),
         resting_heart_rate: Math.floor(Number(formData.resting_heart_rate)),
         VO2_max: Number(formData.VO2_max),
-        body_fat: Number(formData.body_fat)
+        body_fat: Number(formData.body_fat),
+        bmi: Number(bmi.toFixed(1)), 
       };
 
       // Update gender validation to match MenuItem values
