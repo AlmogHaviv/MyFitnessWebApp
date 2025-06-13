@@ -139,3 +139,26 @@ export const recommendBuddies = async (userId: string) => {
     throw error;
   }
 };
+
+export const getWorkoutRecommendations = async (userData: any, query: string) => {
+  try {
+    const response = await fetch(
+      `${API_BASE_URL}/best-workout-recommendation?query=${encodeURIComponent(query)}`,
+      {
+        method: 'POST',
+        headers: defaultHeaders,
+        body: JSON.stringify(userData),
+      }
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.detail || `Failed to get recommendations: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error getting workout recommendations:', error);
+    throw error;
+  }
+};

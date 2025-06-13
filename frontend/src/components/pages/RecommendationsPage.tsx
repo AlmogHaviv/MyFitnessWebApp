@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Container, CircularProgress, Typography, Card, CardContent, Button, Grid, Box, CardMedia } from '@mui/material';
+import { getWorkoutRecommendations } from '../../services/api'; // adjust path as needed
 
 const mockVideos = [
   {
@@ -47,15 +48,7 @@ const RecommendationsPage: React.FC = () => {
     const fetchRecommendations = async () => {
       setLoading(true);
       try {
-        const response = await fetch(
-          'http://localhost:8000/best-workout-recommendation?query=' + encodeURIComponent(query),
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(userData),
-          }
-        );
-        const data = await response.json();
+        const data = await getWorkoutRecommendations(userData, query);
         setVideos(data.workout_recommendations || []);
       } catch (err) {
         setVideos([]);
