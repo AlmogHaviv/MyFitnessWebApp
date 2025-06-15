@@ -100,12 +100,13 @@ const MainPage: React.FC = () => {
 
         // Fetch similar buddies
         const similarUsersResponse = await getSimilarUsers(parsedUserData);
-        const sortedBuddies = similarUsersResponse.similar_users.sort(
-          (a: Buddy, b: Buddy) => a.distance - b.distance
-        );
-        setBuddies(sortedBuddies);
-        setCurrentBuddies(sortedBuddies.slice(0, 3));
-        setSeenBuddies(new Set(sortedBuddies.slice(0, 3).map((buddy: { id_number: any; }) => buddy.id_number)));
+        // If the response is an object with a property (e.g., similar_users), use that array
+        const similarUsersArray = Array.isArray(similarUsersResponse)
+          ? similarUsersResponse
+          : similarUsersResponse.similar_users || [];
+        setBuddies(similarUsersArray);
+        setCurrentBuddies(similarUsersArray.slice(0, 3));
+        setSeenBuddies(new Set(similarUsersArray.slice(0, 3).map((buddy: { id_number: any; }) => buddy.id_number)));
 
         // Fetch recommended buddies
         const recommendations = await recommendBuddies(String(parsedUserData.id_number));

@@ -74,6 +74,9 @@ class SimilarUsersResponse(BaseModel):
     id_numbers: List[int]
     similar_users: List[Dict]
 
+class SimilarUsersRerankerResponse(BaseModel):
+    id_numbers: List[int]
+    similar_users: List[Dict]
 
 class UserEvent(BaseModel):
     user_id: str

@@ -34,7 +34,7 @@ export const createUserProfile = async (userData: any) => {
 
 export const getSimilarUsers = async (userData: any) => {
   try {
-    const response = await fetch(`${API_BASE_URL}/similar-users`, {
+    const response = await fetch(`${API_BASE_URL}/similar-users-reranked`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
