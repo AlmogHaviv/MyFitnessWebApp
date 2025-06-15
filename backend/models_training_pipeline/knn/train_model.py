@@ -173,7 +173,7 @@ def train_and_save_model():
 
         # Finding similar users
         logger.info("Finding similar users for the provided profile...")
-        distances, id_numbers = recommender.find_similar_users(user_profile)
+        distances, id_numbers = recommender.find_similar_users(user_profile, 15)
 
         if not id_numbers:
             logger.warning("No similar users found.")
@@ -220,7 +220,7 @@ def test_loaded_model():
         }
 
         logger.info("Testing inference with loaded model...")
-        distances, id_numbers = test_recommender.find_similar_users(test_profile)
+        distances, id_numbers = test_recommender.find_similar_users(test_profile, 15)
         
         logger.info("Model test results:")
         logger.info(f"Found {len(distances)} similar users")

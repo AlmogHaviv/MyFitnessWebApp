@@ -73,23 +73,23 @@ class UserRecommender:
         # Use cosine distance because:
         # "Cosine similarity focuses on the orientation of vectors rather than their magnitude,
         #  which helps in comparing user profiles that may differ in scale but have similar patterns."
-        self.model = NearestNeighbors(n_neighbors=15, metric='cosine')
+        self.model = NearestNeighbors(n_neighbors=150, metric='cosine')
         self.model.fit(processed_data)
         
         self.save_model()
 
     
-    def find_similar_users(self, user_profile):
-        """Find similar users using the KNN model."""
-        
+    def find_similar_users(self, user_profile, k):
         profile_df = pd.DataFrame([user_profile])
         processed_profile = self.preprocess_data(profile_df, fit=False)
 
         distances, indices = self.model.kneighbors(processed_profile)
 
-        # Convert indices to user_ids
-        similar_user_ids = [self.user_ids[i] for i in indices.flatten()]
+        if k is not None:
+            distances = distances[:, :k]
+            indices = indices[:, :k]
 
+        similar_user_ids = [self.user_ids[i] for i in indices.flatten()]
         return distances.flatten(), similar_user_ids
 
     def save_model(self):
