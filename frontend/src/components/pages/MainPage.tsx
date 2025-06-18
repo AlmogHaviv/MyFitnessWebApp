@@ -25,11 +25,14 @@ import Fade from '@mui/material/Fade';
 import MaleIcon from '@mui/icons-material/Male';
 import FemaleIcon from '@mui/icons-material/Female';
 import SendIcon from '@mui/icons-material/Send';
+import PhoneIphoneIcon from '@mui/icons-material/PhoneIphone';
 import { getSimilarUsers, recommendBuddies, logEvent } from '../../services/api';
 import { getSuggestedExercises, Exercise, getSuggestedEquipment } from '../../services/exerciseService';
 import { getRandomImageByGender } from '../../services/imageStock';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
+import Grow from '@mui/material/Grow';
+import Zoom from '@mui/material/Zoom';
 
 interface Buddy {
   id_number: number;
@@ -78,6 +81,11 @@ const MainPage: React.FC = () => {
   const [animationDirection, setAnimationDirection] = useState<'left' | 'right' | null>(null);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
+  // Add this state to track liked cards by their index
+  const [likedIndexes, setLikedIndexes] = useState<{ [key: number]: boolean }>({});
+  const [hiddenIndexes, setHiddenIndexes] = useState<{ [key: number]: boolean }>({});
+  const [displayIndexes, setDisplayIndexes] = useState<number[]>([0, 1, 2]); // Track which buddies to display
+
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
   };
@@ -105,15 +113,15 @@ const MainPage: React.FC = () => {
           ? similarUsersResponse
           : similarUsersResponse.similar_users || [];
         setBuddies(similarUsersArray);
-        setCurrentBuddies(similarUsersArray.slice(0, 3));
-        setSeenBuddies(new Set(similarUsersArray.slice(0, 3).map((buddy: { id_number: any; }) => buddy.id_number)));
+        setCurrentBuddies(similarUsersArray); // <-- show all buddies, not just 3
+        setSeenBuddies(new Set(similarUsersArray.map((buddy: { id_number: any; }) => buddy.id_number)));
 
         // Fetch recommended buddies
         const recommendations = await recommendBuddies(String(parsedUserData.id_number));
         setRecommendedBuddies(recommendations.recommended_buddies);
-        setCurrentRecommendedBuddies(recommendations.recommended_buddies.slice(0, 3));
+        setCurrentRecommendedBuddies(recommendations.recommended_buddies); // <-- show all recommended buddies
         setSeenRecommendedBuddies(
-          new Set(recommendations.recommended_buddies.slice(0, 3).map((buddy: { id_number: any; }) => buddy.id_number))
+          new Set(recommendations.recommended_buddies.map((buddy: { id_number: any; }) => buddy.id_number))
         );
 
 
@@ -132,6 +140,16 @@ const MainPage: React.FC = () => {
 
     fetchData();
   }, [navigate]);
+
+  // When buddies list changes, reset displayIndexes to always show the first 3 visible
+  useEffect(() => {
+    setDisplayIndexes(
+      buddies
+        .map((_, idx) => idx)
+        .filter(idx => !hiddenIndexes[idx])
+        .slice(0, 3)
+    );
+  }, [buddies, hiddenIndexes]);
 
   const replaceBuddy = (index: number) => {
     const updatedSeenBuddies = new Set(seenBuddies);
@@ -188,23 +206,18 @@ const MainPage: React.FC = () => {
   };
 
   const handleLike = async (index: number) => {
-    setAnimationDirection('right');
+    // Mark this card as liked
+    setLikedIndexes(prev => ({ ...prev, [index]: true }));
 
+    // Optionally keep the logging/event logic
     const currentUser = userData;
     const likedBuddy = currentBuddies[index];
-    console.log('Liked User:', likedBuddy);
-
     try {
       await logEvent(String(currentUser.id_number), String(likedBuddy.id_number), 'like');
-      console.log('Logged event: ', currentUser.full_name, 'Liked', likedBuddy.full_name);
     } catch (error) {
       console.error('Error logging like event:', error);
     }
-
-    setTimeout(() => {
-      replaceBuddy(index); // Replace the liked buddy
-      setAnimationDirection(null);
-    }, 300);
+    // Do NOT call replaceBuddy(index) here, so the card stays visible
   };
 
   const handleDislike = async (index: number) => {
@@ -265,6 +278,21 @@ const MainPage: React.FC = () => {
       replaceRecommendedBuddy(index); // Replace the disliked recommended buddy
       setAnimationDirection(null);
     }, 300);
+  };
+
+  // Handler for hiding the "12345" card and updating displayIndexes
+  const handleHide12345 = (index: number) => {
+    setHiddenIndexes(prev => {
+      const updated = { ...prev, [index]: true };
+      // Find the next available buddy to display
+      const nextIdx = buddies.findIndex((_, idx) => !updated[idx] && !displayIndexes.includes(idx));
+      setDisplayIndexes(prevDisplay => {
+        const newDisplay = prevDisplay.map(i => (i === index ? nextIdx : i));
+        // Remove -1 if no more buddies
+        return newDisplay.filter(i => i !== -1);
+      });
+      return updated;
+    });
   };
 
   if (loading) {
@@ -651,88 +679,179 @@ const MainPage: React.FC = () => {
         >
           Similar Fitness Buddies
         </Typography>
-        {currentBuddies.length > 0 ? (
+        {buddies.length > 0 && displayIndexes.length > 0 ? (
           <Grid container spacing={3}>
-            {currentBuddies.map((buddy, index) => (
-              <Grid item xs={12} sm={6} md={4} key={buddy.id_number}>
-                <Fade
-                  in={true} // Always true to enable fading
-                  timeout={300} // Match the timeout with the setTimeout in replaceBuddy
-                >
-                  <Card
-                    sx={{
-                      borderRadius: '20px',
-                      boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.1)',
-                    }}
-                  >
-                    <CardMedia
-                      component="img"
-                      height="300"
-                      width="300"
-                      image={getRandomImageByGender(buddy.gender)} // Assign a random image based on gender
-                      alt={buddy.full_name}
-                    />
-                    <CardContent>
-                      <Stack direction="row" alignItems="center" justifyContent="center" spacing={1}>
-                        <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#333', textAlign: 'center' }}>
-                          {buddy.full_name}, {buddy.age}
-                        </Typography>
-                        {buddy.gender.toLowerCase() === 'female' ? (
-                          <FemaleIcon sx={{ color: '#e91e63' }} />
-                        ) : (
-                          <MaleIcon sx={{ color: '#2196f3' }} />
-                        )}
-                      </Stack>
-                      <Stack direction="row" justifyContent="center" spacing={2} sx={{ mt: 1 }}>
-                        <Typography variant="body2" sx={{ color: '#666' }}>
-                          <strong>Height:</strong> {buddy.height} cm
-                        </Typography>
-                        <Typography variant="body2" sx={{ color: '#666' }}>
-                          <strong>Weight:</strong> {buddy.weight} kg
-                        </Typography>
-                        <Typography variant="body2" sx={{ color: '#666' }}>
-                          <strong>Preferred Workout Type:</strong> {buddy.workout_type}
-                        </Typography>
-                      </Stack>
-                      <Stack direction="row" justifyContent="center" spacing={2} sx={{ mt: 1 }}>
-                        <Typography variant="body2" sx={{ color: '#666' }}>
-                          <strong>VO2 Max:</strong> {buddy.VO2_max}
-                        </Typography>
-                        <Typography variant="body2" sx={{ color: '#666' }}>
-                          <strong>Body Fat:</strong> {buddy.body_fat}%
-                        </Typography>
-                      </Stack>
-                      <Stack direction="row" spacing={2} justifyContent="center" sx={{ mt: 2 }}>
-                        <Button
-                          variant="contained"
-                          color="error"
-                          startIcon={<CloseIcon />}
-                          onClick={() => handleDislike(index)}
-                          sx={{
-                            borderRadius: '20px',
-                            textTransform: 'none',
-                          }}
-                        >
-                          Dislike
-                        </Button>
-                        <Button
-                          variant="contained"
-                          color="success"
-                          startIcon={<FavoriteIcon />}
-                          onClick={() => handleLike(index)}
-                          sx={{
-                            borderRadius: '20px',
-                            textTransform: 'none',
-                          }}
-                        >
-                          Like
-                        </Button>
-                      </Stack>
-                    </CardContent>
-                  </Card>
-                </Fade>
-              </Grid>
-            ))}
+            {displayIndexes.map((buddyIdx, slotIdx) => {
+              const buddy = buddies[buddyIdx];
+              if (!buddy || hiddenIndexes[buddyIdx]) return null;
+              return (
+                <Grid item xs={12} sm={6} md={4} key={buddy.id_number}>
+                  {/* Use Grow for card entrance and Fade for the "12345" transition, with a longer timeout */}
+                  <Grow in timeout={600}>
+                    <Card
+                      sx={{
+                        borderRadius: '20px',
+                        boxShadow: '0px 2px 12px rgba(0,0,0,0.10)',
+                        transition: 'box-shadow 0.3s, transform 0.3s, background 0.3s',
+                        '&:hover': {
+                          boxShadow: '0px 6px 24px rgba(0,0,0,0.16)',
+                          transform: 'scale(1.02)',
+                        },
+                        background: likedIndexes[buddyIdx]
+                          ? '#f6f7fa'
+                          : '#fff',
+                      }}
+                    >
+                      {likedIndexes[buddyIdx] ? (
+                        <Fade in timeout={1200}>
+                          <CardContent>
+                            <CardMedia
+                              component="img"
+                              height="300"
+                              width="300"
+                              image={getRandomImageByGender(buddy.gender)}
+                              alt={buddy.full_name}
+                              sx={{
+                                filter: 'grayscale(0.15) brightness(0.98)',
+                                borderRadius: '20px 20px 0 0',
+                                transition: 'filter 0.3s',
+                                mb: 2,
+                              }}
+                            />
+                            <Box
+                              sx={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                mt: 2,
+                                mb: 2,
+                                minHeight: 56, // ensures vertical alignment
+                              }}
+                            >
+                              <PhoneIphoneIcon sx={{ fontSize: 32, color: '#555', mr: 1.5 }} />
+                              <Typography
+                                variant="h6"
+                                sx={{
+                                  textAlign: 'center',
+                                  color: '#222',
+                                  fontWeight: 500,
+                                  letterSpacing: 1,
+                                  textShadow: 'none',
+                                  transition: 'color 0.3s',
+                                  mb: 0,
+                                  fontSize: 22,
+                                  lineHeight: 1,
+                                }}
+                              >
+                                052-7473819
+                              </Typography>
+                            </Box>
+                            <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                              <Button
+                                variant="outlined"
+                                color="error"
+                                onClick={() => handleHide12345(buddyIdx)}
+                                sx={{
+                                  borderRadius: '50%',
+                                  minWidth: 40,
+                                  width: 40,
+                                  height: 40,
+                                  p: 0,
+                                  fontWeight: 'bold',
+                                  fontSize: 20,
+                                  boxShadow: 'none',
+                                  borderColor: '#bbb',
+                                  color: '#888',
+                                  '&:hover': {
+                                    background: '#f5f5f5',
+                                    borderColor: '#888',
+                                    color: '#d32f2f',
+                                  },
+                                }}
+                              >
+                                X
+                              </Button>
+                            </Box>
+                          </CardContent>
+                        </Fade>
+                      ) : (
+                        <>
+                          <CardMedia
+                            component="img"
+                            height="300"
+                            width="300"
+                            image={getRandomImageByGender(buddy.gender)}
+                            alt={buddy.full_name}
+                            sx={{
+                              filter: 'grayscale(0.10) brightness(1)',
+                              borderRadius: '20px 20px 0 0',
+                              transition: 'filter 0.3s',
+                            }}
+                          />
+                          <CardContent>
+                            <Stack direction="row" alignItems="center" justifyContent="center" spacing={1}>
+                              <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#333', textAlign: 'center' }}>
+                                {buddy.full_name}, {buddy.age}
+                              </Typography>
+                              {buddy.gender.toLowerCase() === 'female' ? (
+                                <FemaleIcon sx={{ color: '#e91e63' }} />
+                              ) : (
+                                <MaleIcon sx={{ color: '#2196f3' }} />
+                              )}
+                            </Stack>
+                            <Stack direction="row" justifyContent="center" spacing={2} sx={{ mt: 1 }}>
+                              <Typography variant="body2" sx={{ color: '#666' }}>
+                                <strong>Height:</strong> {buddy.height} cm
+                              </Typography>
+                              <Typography variant="body2" sx={{ color: '#666' }}>
+                                <strong>Weight:</strong> {buddy.weight} kg
+                              </Typography>
+                              <Typography variant="body2" sx={{ color: '#666' }}>
+                                <strong>Preferred Workout Type:</strong> {buddy.workout_type}
+                              </Typography>
+                            </Stack>
+                            <Stack direction="row" justifyContent="center" spacing={2} sx={{ mt: 1 }}>
+                              <Typography variant="body2" sx={{ color: '#666' }}>
+                                <strong>VO2 Max:</strong> {buddy.VO2_max}
+                              </Typography>
+                              <Typography variant="body2" sx={{ color: '#666' }}>
+                                <strong>Body Fat:</strong> {buddy.body_fat}%
+                              </Typography>
+                            </Stack>
+                            <Stack direction="row" spacing={2} justifyContent="center" sx={{ mt: 2 }}>
+                              <Button
+                                variant="contained"
+                                color="error"
+                                startIcon={<CloseIcon />}
+                                onClick={() => handleDislike(buddyIdx)}
+                                sx={{
+                                  borderRadius: '20px',
+                                  textTransform: 'none',
+                                }}
+                              >
+                                Dislike
+                              </Button>
+                              <Button
+                                variant="contained"
+                                color="success"
+                                startIcon={<FavoriteIcon />}
+                                onClick={() => handleLike(buddyIdx)}
+                                sx={{
+                                  borderRadius: '20px',
+                                  textTransform: 'none',
+                                }}
+                              >
+                                Like
+                              </Button>
+                            </Stack>
+                          </CardContent>
+                        </>
+                      )}
+                    </Card>
+                  </Grow>
+                </Grid>
+              );
+            })}
           </Grid>
         ) : (
           <Typography variant="body1" sx={{ color: '#666', textAlign: 'center', mt: 2 }}>
