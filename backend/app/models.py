@@ -88,7 +88,6 @@ class UserEvent(BaseModel):
 class WorkoutRecommendation(BaseModel):
     url: str
     explanation: str 
-    equipment: List[str] 
 
 
 class WorkoutRecommendationEvent(BaseModel):

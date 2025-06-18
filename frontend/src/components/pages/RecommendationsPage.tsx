@@ -27,7 +27,7 @@ const mockVideos = [
 const RecommendationsPage: React.FC = () => {
   const [videos, setVideos] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [useMockVideos] = useState(true); // Set to true to use hardcoded videos
+  const [useMockVideos] = useState(false); // Set to true to use hardcoded videos
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -136,7 +136,7 @@ const RecommendationsPage: React.FC = () => {
       </Grid>
       <Button
         variant="contained"
-        onClick={() => window.history.back()}
+        onClick={() => navigate('/main')}
         sx={{ mt: 4, borderRadius: '20px', textTransform: 'none' }}
       >
         Back to Main

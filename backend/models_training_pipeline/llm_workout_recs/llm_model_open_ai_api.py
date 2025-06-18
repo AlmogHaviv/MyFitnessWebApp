@@ -7,17 +7,19 @@ from openai import OpenAI
 
 
 class WorkoutRecommender:
-    def __init__(self, user_profile: dict, query: str, youtube_api_key: str = "AIzaSyCyGZ_3m-GppNhk0nmps_rRay6f7B0hgGE", open_router_api_key: str = "dummy string - change me to your OpenRouter key"):
+    def __init__(self, user_profile: dict, query: str, youtube_api_key: str = "AIzaSyCyGZ_3m-GppNhk0nmps_rRay6f7B0hgGE", open_router_api_key: str = "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"):
         self.user_profile = user_profile
         self.query = query
-        print(f"OpenAI API key: {open_router_api_key}")
         self.youtube = build("youtube", "v3", developerKey=youtube_api_key)
         self.open_router_api_key = open_router_api_key
 
     def _call_llm(self, prompt: str, max_tokens: int = 250, retries: int = 2) -> str:
         for _ in range(retries):
             try:
-                client = OpenAI(api_key=self.open_router_api_key, base_url="https://openrouter.ai/api/v1")
+                client = OpenAI(
+                    base_url="https://openrouter.ai/api/v1",
+                    api_key=self.open_router_api_key           
+                )
                 response = client.chat.completions.create(
                     model="meta-llama/llama-3.3-8b-instruct:free",
                     messages=[
@@ -29,7 +31,7 @@ class WorkoutRecommender:
                 )
                 return response.choices[0].message.content.strip()
             except Exception as e:
-                print(f"OpenAI API call failed: {e}")
+                print(f"OpenRouter API call failed: {e}")
         return "[LLM output failed]"
 
     def _format_user_profile(self) -> str:
@@ -56,7 +58,6 @@ class WorkoutRecommender:
         """)
 
     def _build_explanation_prompt(self, title: str, description: str, transcript: str) -> str:
-        # **Crucial change here:** Pass the transcript status to the LLM
         transcript_info = f"Transcript Snippet: {transcript[:800]}" if transcript else "Transcript: Not available. Please rely on Title and Description."
 
         return textwrap.dedent(f"""
@@ -75,10 +76,7 @@ class WorkoutRecommender:
         - Why the video is helpful for the goal
         - Difficulty level
 
-        EQUIPMENT:
-        - List essential workout equipment used in the video (if mentioned or implied in title/description/transcript)
-
-        Respond ONLY in the format shown above. If you cannot determine equipment, state "No specific equipment mentioned or implied."
+        Respond ONLY in the format shown above. 
         """)
     
     def _get_transcript(self, video_id: str) -> str:
@@ -106,20 +104,16 @@ class WorkoutRecommender:
                     print(f"Transcript in language {transcript.language_code} for video {video_id} is not translatable.")
 
             print(f"No usable transcript (native English or translatable) found for video {video_id}")
-            # Return a specific message for the LLM
             return "No_Transcript_Available"
 
         except TranscriptsDisabled:
             print(f"Transcripts are disabled for video {video_id}.")
-            # **Crucial change here:** Return a specific message for the LLM
             return "Transcripts_Disabled"
         except NoTranscriptFound:
             print(f"No transcripts found at all for video {video_id}.")
-            # **Crucial change here:** Return a specific message for the LLM
             return "No_Transcript_Found_At_All"
         except Exception as e:
             print(f"An unexpected error occurred getting transcript for video {video_id}: {e}")
-            # **Crucial change here:** Return a specific message for the LLM
             return f"Transcript_Error: {e}"
 
     def _search_youtube(self, query: str, limit: int = 2) -> List[Dict[str, str]]:
@@ -149,18 +143,15 @@ class WorkoutRecommender:
 
     def _parse_llm_response(self, response: str) -> Dict[str, str]:
         try:
-            if "EXPLANATION:" in response and "EQUIPMENT:" in response:
-                explanation = response.split("EXPLANATION:")[1].split("EQUIPMENT:")[0].strip()
-                equipment_block = response.split("EQUIPMENT:")[1].strip()
-                equipment = [line.strip("-• ") for line in equipment_block.split("\n") if line.strip()]
+            if "EXPLANATION:" in response:
+                explanation = response.split("EXPLANATION:")[1].strip()
                 return {
                     "explanation": explanation,
-                    "equipment": equipment
                 }
-            return {"explanation": response, "equipment": []}
+            return {"explanation": response}
         except Exception as e:
             print(f"Error parsing LLM response: {e}")
-            return {"explanation": response, "equipment": []}
+            return {"explanation": response}
 
     def workout_urls_and_explanations(self) -> List[Dict[str, str]]:
         print(f"Processing request: {self.query}")
@@ -188,8 +179,7 @@ class WorkoutRecommender:
                 return {
                     "url": f"https://www.youtube.com/watch?v={video_id}",
                     "title": title,
-                    "explanation": parsed_response["explanation"],
-                    "equipment": parsed_response["equipment"]
+                    "explanation": parsed_response["explanation"]
                 }
             except Exception as e:
                 print(f"Error processing video {video.get('title', 'unknown')}: {e}")

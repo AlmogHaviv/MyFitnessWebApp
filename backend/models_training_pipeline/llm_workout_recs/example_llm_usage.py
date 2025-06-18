@@ -1,4 +1,4 @@
-from backend.models_training_pipeline.llm_workout_recs.llm_model_open_ai_api import WorkoutRecommender
+from llm_model_open_ai_api import WorkoutRecommender
 
 def main():
     recommender = WorkoutRecommender(
@@ -22,7 +22,6 @@ def main():
             print(f"\n{i}. Workout Video")
             print(f"URL: {rec['url']}")
             print(f"Explanation: {rec['explanation']}")
-            print(f"Required Equipment: {', '.join(rec['equipment'])}")
     except Exception as e:
         print(f"An error occurred: {e}")
 

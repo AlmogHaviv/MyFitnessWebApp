@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Query
 from app.models import UserProfile, WorkoutRecommendationEvent
 from app.database import users_collection, workout_collection
-from models_training_pipeline.llm_workout_recs.llm_workout_recs import WorkoutRecommender
+from models_training_pipeline.llm_workout_recs.llm_model_open_ai_api import WorkoutRecommender
 
 router = APIRouter()
 
