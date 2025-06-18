@@ -33,6 +33,7 @@ import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import Grow from '@mui/material/Grow';
 import Zoom from '@mui/material/Zoom';
+import Avatar from '@mui/material/Avatar';
 
 interface Buddy {
   id_number: number;
@@ -356,22 +357,48 @@ const MainPage: React.FC = () => {
         <Box
           sx={{
             position: 'absolute',
-            top: 16,
-            left: 16,
-            backgroundColor: '#fff',
-            borderRadius: '15px',
-            boxShadow: '0px 2px 5px rgba(0, 0, 0, 0.1)',
-            padding: '8px 16px',
+            top: 24,
+            left: 24,
+            display: 'flex',
+            alignItems: 'center',
+            backgroundColor: 'transparent',
+            boxShadow: 'none',
+            padding: 0,
+            zIndex: 2,
           }}
         >
+          <Avatar
+            src={getRandomImageByGender(userData.gender)}
+            alt={userData.full_name}
+            sx={{
+              width: 56,
+              height: 56,
+              mr: 1.5,
+              border: '2.5px solid #fff',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.10)',
+              background: '#f5f5f5',
+              cursor: 'pointer',
+            }}
+            onClick={handleMenuOpen}
+          />
           <Typography
             variant="body1"
             sx={{
-              fontWeight: 'bold',
-              color: '#333',
+              fontWeight: 600,
+              color: '#222',
               cursor: 'pointer',
+              background: 'rgba(255,255,255,0.85)',
+              borderRadius: '20px',
+              px: 2,
+              py: 1,
+              boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
+              fontSize: 18,
+              transition: 'background 0.2s',
+              '&:hover': {
+                background: 'rgba(245,245,245,0.95)',
+              },
             }}
-            onClick={handleMenuOpen} // Open dropdown menu on click
+            onClick={handleMenuOpen}
           >
             Welcome {userData.full_name}
           </Typography>
