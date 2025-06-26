@@ -10,7 +10,6 @@ import {
   Button,
   CircularProgress,
   Alert,
-  Chip,
   Stack,
   Grid,
   Paper,
@@ -20,19 +19,16 @@ import {
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import CloseIcon from '@mui/icons-material/Close';
 import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
-import Slide from '@mui/material/Slide';
 import Fade from '@mui/material/Fade';
 import MaleIcon from '@mui/icons-material/Male';
 import FemaleIcon from '@mui/icons-material/Female';
 import SendIcon from '@mui/icons-material/Send';
 import PhoneIphoneIcon from '@mui/icons-material/PhoneIphone';
 import { getSimilarUsers, recommendBuddies, logEvent } from '../../services/api';
-import { getSuggestedExercises, Exercise, getSuggestedEquipment } from '../../services/exerciseService';
 import { getRandomImageByGender } from '../../services/imageStock';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import Grow from '@mui/material/Grow';
-import Zoom from '@mui/material/Zoom';
 import Avatar from '@mui/material/Avatar';
 
 interface Buddy {
@@ -48,14 +44,7 @@ interface Buddy {
   body_fat: number;
   workout_type: string;
   distance: number; // Added distance property for sorting
-}
-
-interface Equipment {
-  id: number;
-  name: string;
-  description: string;
-  image: string;
-  link: string;
+  imageUrl?: string;
 }
 
 const MainPage: React.FC = () => {
@@ -74,10 +63,7 @@ const MainPage: React.FC = () => {
   const [currentRecommendedBuddies, setCurrentRecommendedBuddies] = useState<Buddy[]>([]);
   const [seenRecommendedBuddies, setSeenRecommendedBuddies] = useState<Set<number>>(new Set());
 
-  // States for Exercises and Equipment
-  const [exercises, setExercises] = useState<Exercise[]>([]);
-  const [equipment, setEquipment] = useState<Equipment[]>([]);
-
+  const [userAvatar, setUserAvatar] = useState<string>('');
   const [userData, setUserData] = useState<any>(null);
   const [animationDirection, setAnimationDirection] = useState<'left' | 'right' | null>(null);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -106,32 +92,34 @@ const MainPage: React.FC = () => {
 
         const parsedUserData = JSON.parse(userDataString);
         setUserData(parsedUserData);
+        setUserAvatar(getRandomImageByGender(parsedUserData.gender));
 
         // Fetch similar buddies
         const similarUsersResponse = await getSimilarUsers(parsedUserData);
         // If the response is an object with a property (e.g., similar_users), use that array
-        const similarUsersArray = Array.isArray(similarUsersResponse)
-          ? similarUsersResponse
-          : similarUsersResponse.similar_users || [];
+        const similarUsersArray = (
+          Array.isArray(similarUsersResponse)
+            ? similarUsersResponse
+            : similarUsersResponse.similar_users || []
+        ).map((buddy: Buddy) => ({
+          ...buddy,
+          imageUrl: getRandomImageByGender(buddy.gender),
+        }));
         setBuddies(similarUsersArray);
         setCurrentBuddies(similarUsersArray); // <-- show all buddies, not just 3
-        setSeenBuddies(new Set(similarUsersArray.map((buddy: { id_number: any; }) => buddy.id_number)));
+        setSeenBuddies(new Set(similarUsersArray.map((buddy: { id_number: any }) => buddy.id_number)));
 
         // Fetch recommended buddies
         const recommendations = await recommendBuddies(String(parsedUserData.id_number));
-        setRecommendedBuddies(recommendations.recommended_buddies);
-        setCurrentRecommendedBuddies(recommendations.recommended_buddies); // <-- show all recommended buddies
+        const recommendedBuddiesWithImages = recommendations.recommended_buddies.map((buddy: Buddy) => ({
+          ...buddy,
+          imageUrl: getRandomImageByGender(buddy.gender),
+        }));
+        setRecommendedBuddies(recommendedBuddiesWithImages);
+        setCurrentRecommendedBuddies(recommendedBuddiesWithImages); // <-- show all recommended buddies
         setSeenRecommendedBuddies(
-          new Set(recommendations.recommended_buddies.map((buddy: { id_number: any; }) => buddy.id_number))
+          new Set(recommendations.recommended_buddies.map((buddy: { id_number: any }) => buddy.id_number))
         );
-
-
-        // Fetch suggested exercises and equipment
-        const fetchedExercises = getSuggestedExercises();
-        setExercises(fetchedExercises);
-
-        const fetchedEquipment = getSuggestedEquipment();
-        setEquipment(fetchedEquipment);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'An error occurred while fetching data');
       } finally {
@@ -368,7 +356,7 @@ const MainPage: React.FC = () => {
           }}
         >
           <Avatar
-            src={getRandomImageByGender(userData.gender)}
+            src={userAvatar}
             alt={userData.full_name}
             sx={{
               width: 56,
@@ -618,7 +606,7 @@ const MainPage: React.FC = () => {
                       component="img"
                       height="300"
                       width="300"
-                      image={getRandomImageByGender(buddy.gender)} // Assign a random image based on gender
+                      image={buddy.imageUrl}
                       alt={buddy.full_name}
                     />
                     <CardContent>
@@ -736,7 +724,7 @@ const MainPage: React.FC = () => {
                               component="img"
                               height="300"
                               width="300"
-                              image={getRandomImageByGender(buddy.gender)}
+                              image={buddy.imageUrl}
                               alt={buddy.full_name}
                               sx={{
                                 filter: 'grayscale(0.15) brightness(0.98)',
@@ -807,7 +795,7 @@ const MainPage: React.FC = () => {
                             component="img"
                             height="300"
                             width="300"
-                            image={getRandomImageByGender(buddy.gender)}
+                            image={buddy.imageUrl}
                             alt={buddy.full_name}
                             sx={{
                               filter: 'grayscale(0.10) brightness(1)',
@@ -885,117 +873,6 @@ const MainPage: React.FC = () => {
             No more matches available. Check back later for new workout buddies!
           </Typography>
         )}
-      </Box>
-
-      {/* Suggested Exercises Section */}
-      <Box
-        sx={{
-          boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.1)',
-          borderRadius: '20px',
-          p: 3,
-          mb: 4,
-          backgroundColor: '#fff',
-        }}
-      >
-        <Typography
-          variant="h5"
-          sx={{
-            fontWeight: 'bold',
-            color: '#333',
-            mb: 2,
-          }}
-        >
-          Suggested Exercises
-        </Typography>
-        <Grid container spacing={3}>
-          {exercises.slice(0, 3).map((exercise) => (
-            <Grid item xs={12} sm={6} md={4} key={exercise.id}>
-              <Card
-                sx={{
-                  borderRadius: '20px',
-                  boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.1)',
-                }}
-              >
-                <CardMedia
-                  component="iframe"
-                  height="200"
-                  src={exercise.videoUrl}
-                  title={exercise.name}
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                />
-                <CardContent>
-                  <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#333' }}>
-                    {exercise.name}
-                  </Typography>
-                  <Typography variant="body2" sx={{ color: '#666' }}>
-                    {exercise.description}
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-          ))}
-        </Grid>
-      </Box>
-
-      {/* Suggested Fitness Equipment Section */}
-      <Box
-        sx={{
-          boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.1)',
-          borderRadius: '20px',
-          p: 3,
-          backgroundColor: '#fff',
-        }}
-      >
-        <Typography
-          variant="h5"
-          sx={{
-            fontWeight: 'bold',
-            color: '#333',
-            mb: 2,
-          }}
-        >
-          Suggested Fitness Equipment
-        </Typography>
-        <Grid container spacing={3}>
-          {equipment.slice(0, 3).map((item) => (
-            <Grid item xs={12} sm={6} md={4} key={item.id}>
-              <Card
-                sx={{
-                  borderRadius: '20px',
-                  boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.1)',
-                }}
-              >
-                <CardMedia
-                  component="img"
-                  height="200"
-                  image={item.image}
-                  alt={item.name}
-                />
-                <CardContent>
-                  <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#333' }}>
-                    {item.name}
-                  </Typography>
-                  <Typography variant="body2" sx={{ color: '#666', mb: 2 }}>
-                    {item.description}
-                  </Typography>
-                  <Button
-                    variant="contained"
-                    color="primary"
-                    href={item.link}
-                    target="_blank"
-                    sx={{
-                      borderRadius: '20px',
-                      textTransform: 'none',
-                    }}
-                  >
-                    Buy on Amazon
-                  </Button>
-                </CardContent>
-              </Card>
-            </Grid>
-          ))}
-        </Grid>
       </Box>
     </Container>
   );

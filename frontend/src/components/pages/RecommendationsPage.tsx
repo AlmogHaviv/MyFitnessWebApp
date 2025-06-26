@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Container, CircularProgress, Typography, Card, CardContent, Button, Grid, Box, CardMedia } from '@mui/material';
 import { getWorkoutRecommendations } from '../../services/api'; // adjust path as needed
@@ -8,19 +8,16 @@ const mockVideos = [
     title: "Perfect Pushup Form Tutorial",
     url: "https://www.youtube.com/watch?v=_l3ySVKYVJ8",
     explanation: "Learn the fundamentals of pushup form and avoid common mistakes.",
-    equipment: ["None"],
   },
   {
     title: "Pushup Variations for Beginners",
     url: "https://www.youtube.com/watch?v=IODxDxX7oi4",
     explanation: "Try these beginner-friendly pushup variations to build strength.",
-    equipment: ["None"],
   },
   {
     title: "How to Increase Pushup Reps Fast",
     url: "https://www.youtube.com/watch?v=Eh00_rniF8E",
     explanation: "Tips and routines to quickly improve your pushup numbers.",
-    equipment: ["None"],
   },
 ];
 
@@ -29,6 +26,7 @@ const RecommendationsPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [useMockVideos] = useState(false); // Set to true to use hardcoded videos
   const navigate = useNavigate();
+  const hasFetched = useRef(false);
 
   useEffect(() => {
     if (useMockVideos) {
@@ -36,6 +34,11 @@ const RecommendationsPage: React.FC = () => {
       setLoading(false);
       return;
     }
+
+    if (hasFetched.current) {
+      return;
+    }
+    hasFetched.current = true;
 
     const userData = JSON.parse(localStorage.getItem('userData') || '{}');
     const query = localStorage.getItem('fitnessQuery') || '';
@@ -113,9 +116,6 @@ const RecommendationsPage: React.FC = () => {
                 </Typography>
                 <Typography variant="body2" sx={{ color: '#666', mb: 1 }}>
                   {vid.explanation}
-                </Typography>
-                <Typography variant="body2" sx={{ color: '#666', mb: 1 }}>
-                  <strong>Equipment:</strong> {Array.isArray(vid.equipment) ? vid.equipment.join(', ') : vid.equipment}
                 </Typography>
                 <Button
                   variant="contained"

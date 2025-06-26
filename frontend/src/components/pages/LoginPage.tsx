@@ -46,6 +46,12 @@ const LoginPage: React.FC = () => {
     setSsn(e.target.value);
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleNext();
+    }
+  };
+
   const handleSignup = () => {
     navigate('/land');
   };
@@ -89,6 +95,7 @@ const LoginPage: React.FC = () => {
           variant="outlined"
           value={ssn}
           onChange={handleChange}
+          onKeyDown={handleKeyDown}
           inputProps={{ maxLength: 9 }}
           sx={{ mb: 3 }}
         />
