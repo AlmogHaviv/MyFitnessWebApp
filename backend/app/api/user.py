@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException
-from app.models import UserProfile, Workout
+from app.models import UserProfile, Workout, UserProfileWithWorkout
 from app.database import users_collection, workout_collection
 from bson import ObjectId
 
@@ -45,11 +45,12 @@ async def create_workout(workout: Workout):
         raise HTTPException(status_code=500, detail=str(e))
 
 # Route to get a user by ID
-@router.get("/users/{user_id}", response_model=UserProfile)
+@router.get("/users/{user_id}", response_model=UserProfileWithWorkout)
 async def get_user(user_id: int):
     user = await users_collection.find_one({"id_number": user_id})
     if user:
-        user["id_number"] = user["id_number"]
+        user_workout = await workout_collection.find_one({"id_number": user_id})
+        user["workout_type"] = user_workout["workout_type"] if user_workout else None
         return user
     raise HTTPException(status_code=404, detail="User not found")
 

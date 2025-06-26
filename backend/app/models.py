@@ -22,6 +22,26 @@ class UserProfile(BaseModel):
         json_encoders = {ObjectId: str}  # Convert ObjectId to string
 
 
+class UserProfileWithWorkout(BaseModel):
+    age: int
+    full_name: str
+    id_number: int 
+    gender: str
+    height: int
+    weight: float
+    daily_calories_intake: int
+    resting_heart_rate: int
+    VO2_max: float
+    body_fat: float
+    bmi: float
+    workout_type: str
+
+    class Config:
+        validate_by_name = True  # Pydantic v2 replacement for allow_population_by_field_name
+        json_encoders = {ObjectId: str}  # Convert ObjectId to string
+
+
+
 # Model for Workout
 class Workout(BaseModel):
     id_number: int
