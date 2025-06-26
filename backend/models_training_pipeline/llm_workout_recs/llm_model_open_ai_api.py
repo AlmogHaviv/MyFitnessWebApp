@@ -7,7 +7,7 @@ from openai import OpenAI
 
 
 class WorkoutRecommender:
-    def __init__(self, user_profile: dict, query: str, youtube_api_key: str = "AIzaSyCyGZ_3m-GppNhk0nmps_rRay6f7B0hgGE", open_router_api_key: str = "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"):
+    def __init__(self, user_profile: dict, query: str, youtube_api_key: str = "AIzaSyCyGZ_3m-GppNhk0nmps_rRay6f7B0hgGE", open_router_api_key: str = "dummy api key - change to yours"):
         self.user_profile = user_profile
         self.query = query
         self.youtube = build("youtube", "v3", developerKey=youtube_api_key)
