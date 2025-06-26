@@ -113,7 +113,7 @@ def rerank_candidates(user_profile: dict, candidate_ids: list[str], raw_data: pd
 
         if features.empty:
             print("Warning: No features generated, falling back to original candidate order")
-            return candidate_ids[:10]  # Return first 10 candidates as fallback
+            return candidate_ids[:30]  # Return first 30 candidates as fallback
 
         # Match the order of columns as in training
         expected_cols = xgb_reranker.model.feature_names_in_.tolist()
@@ -122,7 +122,7 @@ def rerank_candidates(user_profile: dict, candidate_ids: list[str], raw_data: pd
         missing_cols = [col for col in expected_cols if col not in features.columns]
         if missing_cols:
             print(f"Warning: Missing columns {missing_cols}, falling back to original order")
-            return candidate_ids[:10]
+            return candidate_ids[:30]
             
         features = features[expected_cols]
 
@@ -137,7 +137,7 @@ def rerank_candidates(user_profile: dict, candidate_ids: list[str], raw_data: pd
     except Exception as e:
         print(f"Error in reranking: {e}")
         print("Falling back to original candidate order")
-        return candidate_ids[:10]  # Fallback to first 10 candidates
+        return candidate_ids[:30]  # Fallback to first 30 candidates
 
 @router.post("/similar-users-reranked", response_model=SimilarUsersRerankerResponse)
 async def find_similar_users_with_reranking(user_profile: UserProfile) -> SimilarUsersRerankerResponse:

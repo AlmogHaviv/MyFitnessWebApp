@@ -3,7 +3,7 @@ from sklearn.decomposition import TruncatedSVD
 import joblib
 
 class SVDRecommender:
-    def __init__(self, n_components=10):
+    def __init__(self, n_components=20):
         self.n_components = n_components
         self.model = TruncatedSVD(n_components=self.n_components, random_state=42)
         self.user_factors = None
@@ -22,7 +22,7 @@ class SVDRecommender:
         b_idx = self.buddy_index.get_loc(buddy_id)
         return np.dot(self.user_factors[u_idx], self.buddy_factors[b_idx])
 
-    def recommend(self, user_id, top_n=10):
+    def recommend(self, user_id, top_n=20):
         if user_id not in self.user_index:
             return None
         u_idx = self.user_index.get_loc(user_id)

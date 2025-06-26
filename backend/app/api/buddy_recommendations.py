@@ -16,8 +16,8 @@ async def recommend_buddies_endpoint(user_id: str):
         svd_recommender = SVDRecommender()
         svd_recommender.load("models/svd_model")
 
-        # Get the top 5 recommended buddy IDs
-        recommended_buddy_ids = svd_recommender.recommend(user_id, top_n=5)
+        # Get the top 20 recommended buddy IDs
+        recommended_buddy_ids = svd_recommender.recommend(user_id, top_n=20)
         
         # If user is not in the dataset, return empty list
         if recommended_buddy_ids is None:
