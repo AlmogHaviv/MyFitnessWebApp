@@ -7,7 +7,7 @@ from openai import OpenAI
 
 
 class WorkoutRecommender:
-    def __init__(self, user_profile: dict, query: str, youtube_api_key: str = "AIzaSyCyGZ_3m-GppNhk0nmps_rRay6f7B0hgGE", open_router_api_key: str = "change to your key"):
+    def __init__(self, user_profile: dict, query: str, youtube_api_key: str = "AIzaSyCyGZ_3m-GppNhk0nmps_rRay6f7B0hgGE", open_router_api_key: str = "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"):
         self.user_profile = user_profile
         self.query = query
         self.youtube = build("youtube", "v3", developerKey=youtube_api_key)
@@ -21,7 +21,7 @@ class WorkoutRecommender:
                     api_key=self.open_router_api_key           
                 )
                 response = client.chat.completions.create(
-                    model="meta-llama/llama-3.3-8b-instruct:free",
+                    model="meta-llama/llama-3.1-8b-instruct:free",
                     messages=[
                         {"role": "system", "content": "You are a helpful fitness assistant."},
                         {"role": "user", "content": prompt}
@@ -50,25 +50,22 @@ class WorkoutRecommender:
         User profile:
         {profile_str}
 
-        Suggest a concise Youtube query that focuses on the key exercises and goals.
+        Suggest a concise short Youtube query that focuses on the key exercises and goals.
         
         Use the user's profile to suggest a query.
 
         Output only the search query and nothing else.
         """)
 
-    def _build_explanation_prompt(self, title: str, description: str, transcript: str) -> str:
-        transcript_info = f"Transcript Snippet: {transcript[:800]}" if transcript else "Transcript: Not available. Please rely on Title and Description."
-
+    def _build_explanation_prompt(self, title: str, description: str) -> str:
         return textwrap.dedent(f"""
         Analyze this fitness video and assess its usefulness for the user's goal.
-        If the transcript is not available, analyze the video based on its title and description.
+        Only use the video title and description for your analysis.
 
         User goal: "{self.query}"
 
         Video Title: {title}
         Description: {description}
-        {transcript_info}
 
         Output the response in this format:
 
@@ -168,9 +165,8 @@ class WorkoutRecommender:
                 video_id = video["id"]
                 title = video["title"]
                 description = video["description"]
-                transcript = self._get_transcript(video_id)
 
-                explanation_prompt = self._build_explanation_prompt(title, description, transcript)
+                explanation_prompt = self._build_explanation_prompt(title, description)
                 llm_response = self._call_llm(explanation_prompt, max_tokens=250)
                 print(f"Generated explanation for: {title}")
 
