@@ -50,7 +50,8 @@ class WorkoutRecommender:
         User profile:
         {profile_str}
 
-        Suggest a concise short Youtube query that focuses on the key exercises and goals.
+        Suggest a concise short Youtube query that focuses on the key exercises and goals that makes sense as a youtube query.
+        Do not include in the query any redundent specific data like the user's weight or age.
         
         Use the user's profile to suggest a query.
 
@@ -70,10 +71,9 @@ class WorkoutRecommender:
         Output the response in this format:
 
         EXPLANATION:
-        - Why the video is helpful for the goal
-        - Difficulty level
+        - Why the video is helpful for the your goal
 
-        Respond ONLY in the format shown above. 
+        Respond ONLY in the format shown above, shortly. 
         """)
     
     def _get_transcript(self, video_id: str) -> str:

@@ -5,6 +5,7 @@ from transformers import pipeline
 from googleapiclient.discovery import build
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
+# we are not using this model due to space limitations in our PCs 
 
 class WorkoutRecommender:
     def __init__(self, user_profile: dict, query: str, youtube_api_key: str = "AIzaSyCyGZ_3m-GppNhk0nmps_rRay6f7B0hgGE"):
