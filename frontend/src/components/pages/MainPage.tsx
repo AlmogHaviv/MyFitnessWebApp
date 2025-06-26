@@ -24,6 +24,7 @@ import MaleIcon from '@mui/icons-material/Male';
 import FemaleIcon from '@mui/icons-material/Female';
 import SendIcon from '@mui/icons-material/Send';
 import PhoneIphoneIcon from '@mui/icons-material/PhoneIphone';
+import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import { getSimilarUsers, recommendBuddies, logEvent } from '../../services/api';
 import { getRandomImageByGender } from '../../services/imageStock';
 import Menu from '@mui/material/Menu';
@@ -476,7 +477,8 @@ const MainPage: React.FC = () => {
             width: { xs: 800, sm: 1500, md: 1500 },
           }}
         >
-          <Box sx={{ width: '100%', display: 'flex', justifyContent: 'center', mb: 2 }}>
+          <Box sx={{ width: '100%', display: 'flex', justifyContent: 'center', mb: 2, alignItems: 'center', gap: 1 }}>
+            <AutoAwesomeIcon sx={{ fontSize: 32, color: '#FFD700', mr: 1 }} />
             <Typography
               variant="h5"
               sx={{
@@ -485,7 +487,7 @@ const MainPage: React.FC = () => {
                 textAlign: 'center',
               }}
             >
-              What is your fitness goal?
+              Tell us what is your fitness goal and we will find the best workouts videos for you
             </Typography>
           </Box>
           <Box
