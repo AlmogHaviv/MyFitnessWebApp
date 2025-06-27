@@ -34,12 +34,16 @@ You need to:
 
 1. Create a free account at [OpenRouter](https://openrouter.ai/)
 2. Generate an API key from your OpenRouter dashboard
-3. Add the API key to the models_training_pipeline\llm_workout_recs\llm_model_open_ai_api.py as an input - change the dummy string
+3. Open this file:
+   ```bash
+   backend/models_training_pipeline/llm_workout_recs/llm_model_open_ai_api.py
+   ```
+   and change the dummy string assigned to `OPENROUTER_API_KEY` at the top of the file to your actual API key.
 
 ### Do not push any code with your API key!!! If you will, open router will block the key and you will need to create a new one
 Run the example script to test LLM usage:
 ```bash
-python python models_training_pipeline/llm_workout_recs/example_llm_usage.py 
+python models_training_pipeline/llm_workout_recs/example_llm_usage.py 
 ```
 
 Notice- if you are getting:

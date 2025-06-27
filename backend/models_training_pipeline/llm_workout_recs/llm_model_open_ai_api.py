@@ -5,9 +5,11 @@ from googleapiclient.discovery import build
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from openai import OpenAI
 
+# === CHANGE THIS TO YOUR OPENROUTER API KEY ===
+OPENROUTER_API_KEY = "CHANGE THIS TO YOUR OPENROUTER API KEY!"
 
 class WorkoutRecommender:
-    def __init__(self, user_profile: dict, query: str, youtube_api_key: str = "AIzaSyCyGZ_3m-GppNhk0nmps_rRay6f7B0hgGE", open_router_api_key: str = "dummy api key - change to yours"):
+    def __init__(self, user_profile: dict, query: str, youtube_api_key: str = "AIzaSyCyGZ_3m-GppNhk0nmps_rRay6f7B0hgGE", open_router_api_key: str = OPENROUTER_API_KEY):
         self.user_profile = user_profile
         self.query = query
         self.youtube = build("youtube", "v3", developerKey=youtube_api_key)

@@ -15,6 +15,10 @@ import {
   Paper,
   TextField,
   IconButton,
+  MenuItem,
+  Select,
+  FormControl,
+  InputLabel,
 } from '@mui/material';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import CloseIcon from '@mui/icons-material/Close';
@@ -25,12 +29,14 @@ import FemaleIcon from '@mui/icons-material/Female';
 import SendIcon from '@mui/icons-material/Send';
 import PhoneIphoneIcon from '@mui/icons-material/PhoneIphone';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
+import PersonIcon from '@mui/icons-material/Person';
+import Tooltip from '@mui/material/Tooltip';
 import { getSimilarUsers, recommendBuddies, logEvent } from '../../services/api';
 import { getRandomImageByGender } from '../../services/imageStock';
 import Menu from '@mui/material/Menu';
-import MenuItem from '@mui/material/MenuItem';
-import Grow from '@mui/material/Grow';
 import Avatar from '@mui/material/Avatar';
+import Grow from '@mui/material/Grow';
+import Slider from '@mui/material/Slider';
 
 interface Buddy {
   id_number: number;
@@ -57,23 +63,19 @@ const MainPage: React.FC = () => {
   // States for "Similar Buddies" - always show 3
   const [buddies, setBuddies] = useState<Buddy[]>([]);
   const [displayedSimilarBuddies, setDisplayedSimilarBuddies] = useState<Buddy[]>([]);
-  const [likedSimilarBuddies, setLikedSimilarBuddies] = useState<Set<number>>(new Set());
-  const [similarBuddyIndex, setSimilarBuddyIndex] = useState(0);
+  const [showPhoneNumberSimilar, setShowPhoneNumberSimilar] = useState<{ [id: number]: boolean }>({});
+  const [removedSimilarIds, setRemovedSimilarIds] = useState<Set<number>>(new Set());
 
   // States for "Recommended Buddies" - always show 6
   const [recommendedBuddies, setRecommendedBuddies] = useState<Buddy[]>([]);
   const [displayedRecommendedBuddies, setDisplayedRecommendedBuddies] = useState<Buddy[]>([]);
-  const [likedRecommendedBuddies, setLikedRecommendedBuddies] = useState<Set<number>>(new Set());
-  const [recommendedBuddyIndex, setRecommendedBuddyIndex] = useState(0);
+  const [showPhoneNumberRecommended, setShowPhoneNumberRecommended] = useState<{ [id: number]: boolean }>({});
+  const [removedRecommendedIds, setRemovedRecommendedIds] = useState<Set<number>>(new Set());
 
   const [userAvatar, setUserAvatar] = useState<string>('');
   const [userData, setUserData] = useState<any>(null);
   const [animationDirection, setAnimationDirection] = useState<'left' | 'right' | null>(null);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-
-  // Add refs to track like timeouts
-  const likeTimeoutsSimilar = useRef<{ [key: number]: NodeJS.Timeout }>({});
-  const likeTimeoutsRecommended = useRef<{ [key: number]: NodeJS.Timeout }>({});
 
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -108,7 +110,6 @@ const MainPage: React.FC = () => {
         }));
         setBuddies(similarUsersArray);
         setDisplayedSimilarBuddies(similarUsersArray.slice(0, 3)); // Show first 3
-        setSimilarBuddyIndex(3); // Next index to show
 
         // Fetch recommended buddies
         const recommendations = await recommendBuddies(String(parsedUserData.id_number));
@@ -118,7 +119,6 @@ const MainPage: React.FC = () => {
         }));
         setRecommendedBuddies(recommendedBuddiesWithImages);
         setDisplayedRecommendedBuddies(recommendedBuddiesWithImages.slice(0, 6)); // Show first 6
-        setRecommendedBuddyIndex(6); // Next index to show
       } catch (err) {
         setError(err instanceof Error ? err.message : 'An error occurred while fetching data');
       } finally {
@@ -129,124 +129,121 @@ const MainPage: React.FC = () => {
     fetchData();
   }, [navigate]);
 
+  // Filter buddies based on selected filters
+  const [genderFilter, setGenderFilter] = useState<string>('all');
+  const [workoutTypeFilter, setWorkoutTypeFilter] = useState<string>('all');
+  const [ageRange, setAgeRange] = useState<number[]>([18, 60]);
+
+  // New pending states for filters
+  const [pendingGenderFilter, setPendingGenderFilter] = useState(genderFilter);
+  const [pendingWorkoutTypeFilter, setPendingWorkoutTypeFilter] = useState(workoutTypeFilter);
+  const [pendingAgeRange, setPendingAgeRange] = useState(ageRange);
+
+  // Only filter recommended buddies
+  const filteredRecommendedBuddies = recommendedBuddies.filter(buddy =>
+    !removedRecommendedIds.has(buddy.id_number) &&
+    (genderFilter === 'all' || (buddy.gender?.toLowerCase().trim() === genderFilter)) &&
+    (workoutTypeFilter === 'all' || buddy.workout_type === workoutTypeFilter) &&
+    buddy.age >= ageRange[0] && buddy.age <= ageRange[1]
+  );
+
+  // Always show up to 6 recommended buddies
+  const displayedRecommended = filteredRecommendedBuddies.slice(0, 6);
+
+  // Always show up to 3 similar buddies
+  const filteredSimilarBuddies = buddies.filter(buddy => !removedSimilarIds.has(buddy.id_number));
+  const displayedSimilar = filteredSimilarBuddies.slice(0, 3);
+
+  // Get unique workout types for dropdown
+  const allWorkoutTypes = Array.from(new Set([
+    ...buddies.map(b => b.workout_type),
+    ...recommendedBuddies.map(b => b.workout_type),
+  ])).filter(Boolean);
+
+  const handleApplyFilters = () => {
+    setGenderFilter(pendingGenderFilter);
+    setWorkoutTypeFilter(pendingWorkoutTypeFilter);
+    setAgeRange(pendingAgeRange);
+  };
+
+  // Handle like for recommended buddies
+  const handleLikeRecommended = async (buddyIndex: number) => {
+    const buddy = displayedRecommended[buddyIndex];
+    setShowPhoneNumberRecommended(prev => ({ ...prev, [buddy.id_number]: true }));
+    try {
+      await logEvent(String(userData.id_number), String(buddy.id_number), 'like');
+      console.log('Logged event: ', userData.full_name, 'Liked', buddy.full_name);
+    } catch (error) {
+      console.error('Error logging like event for recommended buddy:', error);
+    }
+  };
+
+  // Handle dislike for recommended buddies
+  const handleDislikeRecommended = async (buddyIndex: number) => {
+    const buddy = displayedRecommended[buddyIndex];
+    setRemovedRecommendedIds(prev => new Set(prev).add(buddy.id_number));
+    setShowPhoneNumberRecommended(prev => {
+      const newState = { ...prev };
+      delete newState[buddy.id_number];
+      return newState;
+    });
+    try {
+      await logEvent(String(userData.id_number), String(buddy.id_number), 'dislike');
+      console.log('Logged event: ', userData.full_name, 'Disliked', buddy.full_name);
+    } catch (error) {
+      console.error('Error logging dislike event for recommended buddy:', error);
+    }
+  };
+
+  // Handle hide phone number for recommended buddies
+  const handleHideRecommendedBuddy = (buddyIndex: number) => {
+    const buddy = displayedRecommended[buddyIndex];
+    setRemovedRecommendedIds(prev => new Set(prev).add(buddy.id_number));
+    setShowPhoneNumberRecommended(prev => {
+      const newState = { ...prev };
+      delete newState[buddy.id_number];
+      return newState;
+    });
+  };
+
   // Handle like for similar buddies
   const handleLikeSimilar = async (buddyIndex: number) => {
-    const buddy = displayedSimilarBuddies[buddyIndex];
-    setLikedSimilarBuddies(prev => new Set(prev).add(buddy.id_number));
+    const buddy = displayedSimilar[buddyIndex];
+    setShowPhoneNumberSimilar(prev => ({ ...prev, [buddy.id_number]: true }));
     try {
       await logEvent(String(userData.id_number), String(buddy.id_number), 'like');
       console.log('Logged event: ', userData.full_name, 'Liked', buddy.full_name);
     } catch (error) {
       console.error('Error logging like event:', error);
     }
-    if (likeTimeoutsSimilar.current[buddyIndex]) {
-      clearTimeout(likeTimeoutsSimilar.current[buddyIndex]);
-    }
-    likeTimeoutsSimilar.current[buddyIndex] = setTimeout(() => {
-      replaceWithNextSimilarBuddy(buddyIndex);
-      delete likeTimeoutsSimilar.current[buddyIndex];
-    }, 3000);
   };
 
   // Handle dislike for similar buddies
   const handleDislikeSimilar = async (buddyIndex: number) => {
-    if (likeTimeoutsSimilar.current[buddyIndex]) {
-      clearTimeout(likeTimeoutsSimilar.current[buddyIndex]);
-      delete likeTimeoutsSimilar.current[buddyIndex];
-    }
-    const buddy = displayedSimilarBuddies[buddyIndex];
+    const buddy = displayedSimilar[buddyIndex];
+    setRemovedSimilarIds(prev => new Set(prev).add(buddy.id_number));
+    setShowPhoneNumberSimilar(prev => {
+      const newState = { ...prev };
+      delete newState[buddy.id_number];
+      return newState;
+    });
     try {
       await logEvent(String(userData.id_number), String(buddy.id_number), 'dislike');
       console.log('Logged event: ', userData.full_name, 'Disliked', buddy.full_name);
     } catch (error) {
       console.error('Error logging dislike event:', error);
     }
-    replaceWithNextSimilarBuddy(buddyIndex);
-  };
-
-  // Replace similar buddy with next available one
-  const replaceWithNextSimilarBuddy = (buddyIndex: number) => {
-    setDisplayedSimilarBuddies(prev => {
-      if (similarBuddyIndex < buddies.length) {
-        const newDisplayed = [...prev];
-        newDisplayed[buddyIndex] = buddies[similarBuddyIndex];
-        setSimilarBuddyIndex(prevIdx => prevIdx + 1);
-        return newDisplayed;
-      } else {
-        // No more buddies, remove this slot
-        return prev.filter((_, index) => index !== buddyIndex);
-      }
-    });
-  };
-
-  // Handle like for recommended buddies
-  const handleLikeRecommended = async (buddyIndex: number) => {
-    const buddy = displayedRecommendedBuddies[buddyIndex];
-    setLikedRecommendedBuddies(prev => new Set(prev).add(buddy.id_number));
-    try {
-      await logEvent(String(userData.id_number), String(buddy.id_number), 'like');
-      console.log('Logged event: ', userData.full_name, 'Liked Recommended', buddy.full_name);
-    } catch (error) {
-      console.error('Error logging like event for recommended buddy:', error);
-    }
-    if (likeTimeoutsRecommended.current[buddyIndex]) {
-      clearTimeout(likeTimeoutsRecommended.current[buddyIndex]);
-    }
-    likeTimeoutsRecommended.current[buddyIndex] = setTimeout(() => {
-      replaceWithNextRecommendedBuddy(buddyIndex);
-      delete likeTimeoutsRecommended.current[buddyIndex];
-    }, 3000);
-  };
-
-  // Handle dislike for recommended buddies
-  const handleDislikeRecommended = async (buddyIndex: number) => {
-    if (likeTimeoutsRecommended.current[buddyIndex]) {
-      clearTimeout(likeTimeoutsRecommended.current[buddyIndex]);
-      delete likeTimeoutsRecommended.current[buddyIndex];
-    }
-    const buddy = displayedRecommendedBuddies[buddyIndex];
-    try {
-      await logEvent(String(userData.id_number), String(buddy.id_number), 'dislike');
-      console.log('Logged event: ', userData.full_name, 'Disliked Recommended', buddy.full_name);
-    } catch (error) {
-      console.error('Error logging dislike event for recommended buddy:', error);
-    }
-    replaceWithNextRecommendedBuddy(buddyIndex);
-  };
-
-  // Replace recommended buddy with next available one
-  const replaceWithNextRecommendedBuddy = (buddyIndex: number) => {
-    setDisplayedRecommendedBuddies(prev => {
-      if (recommendedBuddyIndex < recommendedBuddies.length) {
-        const newDisplayed = [...prev];
-        newDisplayed[buddyIndex] = recommendedBuddies[recommendedBuddyIndex];
-        setRecommendedBuddyIndex(prevIdx => prevIdx + 1);
-        return newDisplayed;
-      } else {
-        // No more buddies, remove this slot
-        return prev.filter((_, index) => index !== buddyIndex);
-      }
-    });
   };
 
   // Handle hide phone number for similar buddies
   const handleHideSimilarBuddy = (buddyIndex: number) => {
-    setLikedSimilarBuddies(prev => {
-      const newSet = new Set(prev);
-      newSet.delete(displayedSimilarBuddies[buddyIndex].id_number);
-      return newSet;
+    const buddy = displayedSimilar[buddyIndex];
+    setRemovedSimilarIds(prev => new Set(prev).add(buddy.id_number));
+    setShowPhoneNumberSimilar(prev => {
+      const newState = { ...prev };
+      delete newState[buddy.id_number];
+      return newState;
     });
-    replaceWithNextSimilarBuddy(buddyIndex);
-  };
-
-  // Handle hide phone number for recommended buddies
-  const handleHideRecommendedBuddy = (buddyIndex: number) => {
-    setLikedRecommendedBuddies(prev => {
-      const newSet = new Set(prev);
-      newSet.delete(displayedRecommendedBuddies[buddyIndex].id_number);
-      return newSet;
-    });
-    replaceWithNextRecommendedBuddy(buddyIndex);
   };
 
   if (loading) {
@@ -534,6 +531,260 @@ const MainPage: React.FC = () => {
         </Paper>
       </Box>
 
+      {/* Recommended Buddies Section - Only show if there are recommendations */}
+      {recommendedBuddies.length > 0 && (
+        <Box
+          sx={{
+            boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.1)',
+            borderRadius: '20px',
+            p: 3,
+            mb: 4,
+            backgroundColor: '#fff',
+          }}
+        >
+          <Typography
+            variant="h5"
+            sx={{
+              fontWeight: 'bold',
+              color: '#333',
+              mb: 2,
+            }}
+          >
+            Recommended Fitness Buddies
+          </Typography>
+          {/* Filter Controls - now inside Recommended Buddies section */}
+          <Box sx={{ display: 'flex', gap: 2, mb: 4, justifyContent: 'center', alignItems: 'center' }}>
+            <FormControl sx={{ minWidth: 120 }}>
+              <InputLabel id="gender-filter-label">Gender</InputLabel>
+              <Select
+                labelId="gender-filter-label"
+                value={pendingGenderFilter}
+                label="Gender"
+                onChange={e => setPendingGenderFilter(e.target.value)}
+                size="small"
+              >
+                <MenuItem value="all">All</MenuItem>
+                <MenuItem value="male">Male</MenuItem>
+                <MenuItem value="female">Female</MenuItem>
+                <MenuItem value="other">Other</MenuItem>
+              </Select>
+            </FormControl>
+            <FormControl sx={{ minWidth: 160 }}>
+              <InputLabel id="workout-type-filter-label">Workout Type</InputLabel>
+              <Select
+                labelId="workout-type-filter-label"
+                value={pendingWorkoutTypeFilter}
+                label="Workout Type"
+                onChange={e => setPendingWorkoutTypeFilter(e.target.value)}
+                size="small"
+              >
+                <MenuItem value="all">All</MenuItem>
+                {allWorkoutTypes.map(type => (
+                  <MenuItem key={type} value={type}>{type}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <Box sx={{ display: 'flex', alignItems: 'center', width: 320, px: 2 }}>
+              <InputLabel id="age-range-label" sx={{ minWidth: 70, mr: 3, fontWeight: 500, color: 'text.primary' }}>
+                Age Range:   
+              </InputLabel>
+              <Slider
+                value={pendingAgeRange}
+                onChange={(_, newValue) => setPendingAgeRange(newValue as number[])}
+                valueLabelDisplay="on"
+                min={16}
+                max={80}
+                step={1}
+                sx={{
+                  flex: 1,
+                  '& .MuiSlider-valueLabel': {
+                    top: 48,
+                    background: 'transparent',
+                    color: '#1976d2',
+                    fontWeight: 700,
+                    fontSize: 16,
+                    borderRadius: 4,
+                    padding: '2px 10px',
+                    minWidth: 32,
+                  },
+                }}
+              />
+            </Box>
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={handleApplyFilters}
+              sx={{ ml: 2, height: 40 }}
+            >
+              Apply Filters
+            </Button>
+          </Box>
+          {displayedRecommended.length === 0 ? (
+            <Typography variant="body1" sx={{ color: '#666', textAlign: 'center', mt: 2 }}>
+              No matches found.
+            </Typography>
+          ) : (
+            <Grid container spacing={3}>
+              {displayedRecommended.map((buddy, index) => (
+                <Grid item xs={12} sm={6} md={4} key={buddy.id_number}>
+                  <Grow in timeout={600}>
+                    <Card
+                      sx={{
+                        borderRadius: '20px',
+                        boxShadow: '0px 2px 12px rgba(0,0,0,0.10)',
+                        transition: 'box-shadow 0.3s, transform 0.3s, background 0.3s',
+                        '&:hover': {
+                          boxShadow: '0px 6px 24px rgba(0,0,0,0.16)',
+                          transform: 'scale(1.02)',
+                        },
+                        background: showPhoneNumberRecommended[buddy.id_number] ? '#f6f7fa' : '#fff',
+                      }}
+                    >
+                      {showPhoneNumberRecommended[buddy.id_number] ? (
+                        <Fade in timeout={1200}>
+                          <CardContent>
+                            <CardMedia
+                              component="img"
+                              height="300"
+                              width="300"
+                              image={buddy.imageUrl}
+                              alt={buddy.full_name}
+                              sx={{
+                                filter: 'grayscale(0.15) brightness(0.98)',
+                                borderRadius: '20px 20px 0 0',
+                                transition: 'filter 0.3s',
+                                mb: 2,
+                              }}
+                            />
+                            <Box
+                              sx={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                mt: 2,
+                                mb: 2,
+                                minHeight: 56,
+                              }}
+                            >
+                              <PhoneIphoneIcon sx={{ fontSize: 32, color: '#555', mr: 1.5 }} />
+                              <Typography
+                                variant="h6"
+                                sx={{
+                                  textAlign: 'center',
+                                  color: '#222',
+                                  fontWeight: 500,
+                                  fontSize: 22,
+                                }}
+                              >
+                                052-5381648
+                              </Typography>
+                            </Box>
+                            <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                              <Button
+                                variant="outlined"
+                                color="error"
+                                onClick={() => handleHideRecommendedBuddy(index)}
+                                sx={{
+                                  borderRadius: '50%',
+                                  minWidth: 40,
+                                  width: 40,
+                                  height: 40,
+                                  p: 0,
+                                  fontSize: 20,
+                                }}
+                              >
+                                X
+                              </Button>
+                            </Box>
+                          </CardContent>
+                        </Fade>
+                      ) : (
+                        <>
+                          <CardMedia
+                            component="img"
+                            height="300"
+                            width="300"
+                            image={buddy.imageUrl}
+                            alt={buddy.full_name}
+                            sx={{
+                              filter: 'grayscale(0.10) brightness(1)',
+                              borderRadius: '20px 20px 0 0',
+                              transition: 'filter 0.3s',
+                            }}
+                          />
+                          <CardContent>
+                            <Stack direction="row" alignItems="center" justifyContent="center" spacing={1}>
+                              <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#333', textAlign: 'center' }}>
+                                {buddy.full_name}, {buddy.age}
+                              </Typography>
+                              {(() => {
+                                const gender = buddy.gender?.toLowerCase();
+                                let icon = null;
+                                let label = '';
+                                if (gender === 'female') {
+                                  icon = <FemaleIcon sx={{ color: '#e91e63' }} />;
+                                  label = 'Female';
+                                } else if (gender === 'male') {
+                                  icon = <MaleIcon sx={{ color: '#2196f3' }} />;
+                                  label = 'Male';
+                                } else {
+                                  icon = <PersonIcon sx={{ color: '#9e9e9e' }} />;
+                                  label = 'Other';
+                                }
+                                return <Tooltip title={label} slotProps={{ tooltip: { sx: { fontSize: '1.2rem', fontWeight: 600 } } }}>{icon}</Tooltip>;
+                              })()}
+                            </Stack>
+                            <Stack direction="row" justifyContent="center" spacing={2} sx={{ mt: 1 }}>
+                              <Typography variant="body2" sx={{ color: '#666' }}>
+                                <strong>Height:</strong> {buddy.height} cm
+                              </Typography>
+                              <Typography variant="body2" sx={{ color: '#666' }}>
+                                <strong>Weight:</strong> {buddy.weight} kg
+                              </Typography>
+                              <Typography variant="body2" sx={{ color: '#666' }}>
+                                <strong>Preferred Workout Type:</strong> {buddy.workout_type}
+                              </Typography>
+                            </Stack>
+                            <Stack direction="row" justifyContent="center" spacing={2} sx={{ mt: 1 }}>
+                              <Typography variant="body2" sx={{ color: '#666' }}>
+                                <strong>VO2 Max:</strong> {buddy.VO2_max}
+                              </Typography>
+                              <Typography variant="body2" sx={{ color: '#666' }}>
+                                <strong>Body Fat:</strong> {buddy.body_fat}%
+                              </Typography>
+                            </Stack>
+                            <Stack direction="row" spacing={2} justifyContent="center" sx={{ mt: 2 }}>
+                              <Button
+                                variant="contained"
+                                color="error"
+                                startIcon={<CloseIcon />}
+                                onClick={() => handleDislikeRecommended(index)}
+                                sx={{ borderRadius: '20px', textTransform: 'none' }}
+                              >
+                                Dislike
+                              </Button>
+                              <Button
+                                variant="contained"
+                                color="success"
+                                startIcon={<FavoriteIcon />}
+                                onClick={() => handleLikeRecommended(index)}
+                                sx={{ borderRadius: '20px', textTransform: 'none' }}
+                              >
+                                Like
+                              </Button>
+                            </Stack>
+                          </CardContent>
+                        </>
+                      )}
+                    </Card>
+                  </Grow>
+                </Grid>
+              ))}
+            </Grid>
+          )}
+        </Box>
+      )}
+
       {/* Similar Buddies Section - Always show 3 */}
       <Box
         sx={{
@@ -554,9 +805,9 @@ const MainPage: React.FC = () => {
         >
           Similar Fitness Buddies
         </Typography>
-        {displayedSimilarBuddies.length > 0 ? (
+        {displayedSimilar.length > 0 ? (
           <Grid container spacing={3}>
-            {displayedSimilarBuddies.map((buddy, index) => (
+            {displayedSimilar.map((buddy, index) => (
               <Grid item xs={12} sm={6} md={4} key={buddy.id_number}>
                 <Grow in timeout={600}>
                   <Card
@@ -568,10 +819,10 @@ const MainPage: React.FC = () => {
                         boxShadow: '0px 6px 24px rgba(0,0,0,0.16)',
                         transform: 'scale(1.02)',
                       },
-                      background: likedSimilarBuddies.has(buddy.id_number) ? '#f6f7fa' : '#fff',
+                      background: showPhoneNumberSimilar[buddy.id_number] ? '#f6f7fa' : '#fff',
                     }}
                   >
-                    {likedSimilarBuddies.has(buddy.id_number) ? (
+                    {showPhoneNumberSimilar[buddy.id_number] ? (
                       <Fade in timeout={1200}>
                         <CardContent>
                           <CardMedia
@@ -644,11 +895,22 @@ const MainPage: React.FC = () => {
                             <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#333', textAlign: 'center' }}>
                               {buddy.full_name}, {buddy.age}
                             </Typography>
-                            {buddy.gender.toLowerCase() === 'female' ? (
-                              <FemaleIcon sx={{ color: '#e91e63' }} />
-                            ) : (
-                              <MaleIcon sx={{ color: '#2196f3' }} />
-                            )}
+                            {(() => {
+                              const gender = buddy.gender?.toLowerCase();
+                              let icon = null;
+                              let label = '';
+                              if (gender === 'female') {
+                                icon = <FemaleIcon sx={{ color: '#e91e63' }} />;
+                                label = 'Female';
+                              } else if (gender === 'male') {
+                                icon = <MaleIcon sx={{ color: '#2196f3' }} />;
+                                label = 'Male';
+                              } else {
+                                icon = <PersonIcon sx={{ color: '#9e9e9e' }} />;
+                                label = 'Other';
+                              }
+                              return <Tooltip title={label} slotProps={{ tooltip: { sx: { fontSize: '1.2rem', fontWeight: 600 } } }}>{icon}</Tooltip>;
+                            })()}
                           </Stack>
                           <Stack direction="row" justifyContent="center" spacing={2} sx={{ mt: 1 }}>
                             <Typography variant="body2" sx={{ color: '#666' }}>
@@ -699,180 +961,10 @@ const MainPage: React.FC = () => {
           </Grid>
         ) : (
           <Typography variant="body1" sx={{ color: '#666', textAlign: 'center', mt: 2 }}>
-            No more matches available. Check back later for new workout buddies!
+            No matches found.
           </Typography>
         )}
       </Box>
-
-      {/* Recommended Buddies Section - Always show 6 */}
-      {displayedRecommendedBuddies.length > 0 && (
-        <Box
-          sx={{
-            boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.1)',
-            borderRadius: '20px',
-            p: 3,
-            mb: 4,
-            backgroundColor: '#fff',
-          }}
-        >
-          <Typography
-            variant="h5"
-            sx={{
-              fontWeight: 'bold',
-              color: '#333',
-              mb: 2,
-            }}
-          >
-            Recommended Fitness Buddies
-          </Typography>
-          <Grid container spacing={3}>
-            {displayedRecommendedBuddies.map((buddy, index) => (
-              <Grid item xs={12} sm={6} md={4} key={buddy.id_number}>
-                <Grow in timeout={600}>
-                  <Card
-                    sx={{
-                      borderRadius: '20px',
-                      boxShadow: '0px 2px 12px rgba(0,0,0,0.10)',
-                      transition: 'box-shadow 0.3s, transform 0.3s, background 0.3s',
-                      '&:hover': {
-                        boxShadow: '0px 6px 24px rgba(0,0,0,0.16)',
-                        transform: 'scale(1.02)',
-                      },
-                      background: likedRecommendedBuddies.has(buddy.id_number) ? '#f6f7fa' : '#fff',
-                    }}
-                  >
-                    {likedRecommendedBuddies.has(buddy.id_number) ? (
-                      <Fade in timeout={1200}>
-                        <CardContent>
-                          <CardMedia
-                            component="img"
-                            height="300"
-                            width="300"
-                            image={buddy.imageUrl}
-                            alt={buddy.full_name}
-                            sx={{
-                              filter: 'grayscale(0.15) brightness(0.98)',
-                              borderRadius: '20px 20px 0 0',
-                              transition: 'filter 0.3s',
-                              mb: 2,
-                            }}
-                          />
-                          <Box
-                            sx={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              mt: 2,
-                              mb: 2,
-                              minHeight: 56,
-                            }}
-                          >
-                            <PhoneIphoneIcon sx={{ fontSize: 32, color: '#555', mr: 1.5 }} />
-                            <Typography
-                              variant="h6"
-                              sx={{
-                                textAlign: 'center',
-                                color: '#222',
-                                fontWeight: 500,
-                                fontSize: 22,
-                              }}
-                            >
-                              052-5381648
-                            </Typography>
-                          </Box>
-                          <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-                            <Button
-                              variant="outlined"
-                              color="error"
-                              onClick={() => handleHideRecommendedBuddy(index)}
-                              sx={{
-                                borderRadius: '50%',
-                                minWidth: 40,
-                                width: 40,
-                                height: 40,
-                                p: 0,
-                                fontSize: 20,
-                              }}
-                            >
-                              X
-                            </Button>
-                          </Box>
-                        </CardContent>
-                      </Fade>
-                    ) : (
-                      <>
-                        <CardMedia
-                          component="img"
-                          height="300"
-                          width="300"
-                          image={buddy.imageUrl}
-                          alt={buddy.full_name}
-                          sx={{
-                            filter: 'grayscale(0.10) brightness(1)',
-                            borderRadius: '20px 20px 0 0',
-                            transition: 'filter 0.3s',
-                          }}
-                        />
-                        <CardContent>
-                          <Stack direction="row" alignItems="center" justifyContent="center" spacing={1}>
-                            <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#333', textAlign: 'center' }}>
-                              {buddy.full_name}, {buddy.age}
-                            </Typography>
-                            {buddy.gender.toLowerCase() === 'female' ? (
-                              <FemaleIcon sx={{ color: '#e91e63' }} />
-                            ) : (
-                              <MaleIcon sx={{ color: '#2196f3' }} />
-                            )}
-                          </Stack>
-                          <Stack direction="row" justifyContent="center" spacing={2} sx={{ mt: 1 }}>
-                            <Typography variant="body2" sx={{ color: '#666' }}>
-                              <strong>Height:</strong> {buddy.height} cm
-                            </Typography>
-                            <Typography variant="body2" sx={{ color: '#666' }}>
-                              <strong>Weight:</strong> {buddy.weight} kg
-                            </Typography>
-                            <Typography variant="body2" sx={{ color: '#666' }}>
-                              <strong>Preferred Workout Type:</strong> {buddy.workout_type}
-                            </Typography>
-                          </Stack>
-                          <Stack direction="row" justifyContent="center" spacing={2} sx={{ mt: 1 }}>
-                            <Typography variant="body2" sx={{ color: '#666' }}>
-                              <strong>VO2 Max:</strong> {buddy.VO2_max}
-                            </Typography>
-                            <Typography variant="body2" sx={{ color: '#666' }}>
-                              <strong>Body Fat:</strong> {buddy.body_fat}%
-                            </Typography>
-                          </Stack>
-                          <Stack direction="row" spacing={2} justifyContent="center" sx={{ mt: 2 }}>
-                            <Button
-                              variant="contained"
-                              color="error"
-                              startIcon={<CloseIcon />}
-                              onClick={() => handleDislikeRecommended(index)}
-                              sx={{ borderRadius: '20px', textTransform: 'none' }}
-                            >
-                              Dislike
-                            </Button>
-                            <Button
-                              variant="contained"
-                              color="success"
-                              startIcon={<FavoriteIcon />}
-                              onClick={() => handleLikeRecommended(index)}
-                              sx={{ borderRadius: '20px', textTransform: 'none' }}
-                            >
-                              Like
-                            </Button>
-                          </Stack>
-                        </CardContent>
-                      </>
-                    )}
-                  </Card>
-                </Grow>
-              </Grid>
-            ))}
-          </Grid>
-        </Box>
-      )}
     </Container>
   );
 };
