@@ -18,7 +18,7 @@ source venv/bin/activate  # Windows: venv\Scripts\activate
 ## 2. Install Dependencies
 
 ```bash
-pip install -r requirements.txt
+pip install -r requirements.txt  # If you are on MacOS, remove the winkerberos line from requirements.txt before running this command.
 ```
 
 
