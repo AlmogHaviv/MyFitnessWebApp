@@ -80,19 +80,15 @@ The architecture is modular, with separate routers for key functionalities, and 
 
 ### **Natural Language Processing**
 - **Query Processing**: Converts user fitness goals into optimized YouTube search queries
-- **Content Analysis**: Analyzes video titles, descriptions, and transcripts
+- **Content Analysis**: Analyzes video titles and descriptions
 - **Explanation Generation**: Creates personalized workout explanations
 
 ### **YouTube Integration**
 - **YouTube Data API v3** — Video search and metadata retrieval
-- **Transcript Analysis**: Automatic transcript extraction and processing
-- **Multi-language Support**: Handles videos with non-English transcripts
 
 ### **AI-Powered Features**
 - **Smart Query Enhancement**: LLM improves user queries for better video discovery
 - **Contextual Recommendations**: Considers user profile and recent preferences
-- **Equipment Intelligence**: Automatically identifies required workout equipment
-- **Difficulty Assessment**: Analyzes workout complexity based on user fitness level
 
 &nbsp;<br>
 
