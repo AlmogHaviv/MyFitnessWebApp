@@ -623,7 +623,7 @@ const MainPage: React.FC = () => {
             mb: 2,
           }}
         >
-          People Like You Loved This Fitness Buddies
+          People Similar To You Loved These Fitness Buddies
         </Typography>
         {displayedSimilar.length > 0 ? (
           <Grid container spacing={3}>
