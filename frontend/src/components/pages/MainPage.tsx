@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -62,19 +62,16 @@ const MainPage: React.FC = () => {
 
   // States for "Similar Buddies" - always show 6
   const [buddies, setBuddies] = useState<Buddy[]>([]);
-  const [displayedSimilarBuddies, setDisplayedSimilarBuddies] = useState<Buddy[]>([]);
   const [showPhoneNumberSimilar, setShowPhoneNumberSimilar] = useState<{ [id: number]: boolean }>({});
   const [removedSimilarIds, setRemovedSimilarIds] = useState<Set<number>>(new Set());
 
   // States for "Recommended Buddies" - always show 3
   const [recommendedBuddies, setRecommendedBuddies] = useState<Buddy[]>([]);
-  const [displayedRecommendedBuddies, setDisplayedRecommendedBuddies] = useState<Buddy[]>([]);
   const [showPhoneNumberRecommended, setShowPhoneNumberRecommended] = useState<{ [id: number]: boolean }>({});
   const [removedRecommendedIds, setRemovedRecommendedIds] = useState<Set<number>>(new Set());
 
   const [userAvatar, setUserAvatar] = useState<string>('');
   const [userData, setUserData] = useState<any>(null);
-  const [animationDirection, setAnimationDirection] = useState<'left' | 'right' | null>(null);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
@@ -109,7 +106,6 @@ const MainPage: React.FC = () => {
           imageUrl: getRandomImageByGender(buddy.gender),
         }));
         setBuddies(similarUsersArray);
-        setDisplayedSimilarBuddies(similarUsersArray.slice(0, 6)); // Show first 6
 
         // Fetch recommended buddies
         const recommendations = await recommendBuddies(String(parsedUserData.id_number));
@@ -118,7 +114,6 @@ const MainPage: React.FC = () => {
           imageUrl: getRandomImageByGender(buddy.gender),
         }));
         setRecommendedBuddies(recommendedBuddiesWithImages);
-        setDisplayedRecommendedBuddies(recommendedBuddiesWithImages.slice(0, 3)); // Show first 3
       } catch (err) {
         setError(err instanceof Error ? err.message : 'An error occurred while fetching data');
       } finally {
