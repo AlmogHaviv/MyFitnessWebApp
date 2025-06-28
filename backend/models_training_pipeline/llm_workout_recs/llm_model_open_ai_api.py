@@ -4,9 +4,9 @@ from youtube_transcript_api import YouTubeTranscriptApi, NoTranscriptFound, Tran
 from googleapiclient.discovery import build
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from openai import OpenAI
+import os
 
-# === CHANGE THIS TO YOUR OPENROUTER API KEY ===
-OPENROUTER_API_KEY = "CHANGE THIS TO YOUR OPENROUTER API KEY!"
+OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY", "CHANGE THIS TO YOUR OPENROUTER API KEY!")
 
 class WorkoutRecommender:
     def __init__(self, user_profile: dict, query: str, youtube_api_key: str = "AIzaSyCyGZ_3m-GppNhk0nmps_rRay6f7B0hgGE", open_router_api_key: str = OPENROUTER_API_KEY):
