@@ -623,7 +623,7 @@ const MainPage: React.FC = () => {
             mb: 2,
           }}
         >
-          People Similar To You Loved These Fitness Buddies
+          People Similar to You Loved These Fitness Buddies
         </Typography>
         {displayedSimilar.length > 0 ? (
           <Grid container spacing={3}>
@@ -805,7 +805,7 @@ const MainPage: React.FC = () => {
               mb: 2,
             }}
           >
-            Recommended Fitness Buddies Based On Your Activity 
+            Recommended Fitness Buddies Based on Your Activity
           </Typography>
           {displayedRecommended.length === 0 ? (
             <Typography variant="body1" sx={{ color: '#666', textAlign: 'center', mt: 2 }}>
