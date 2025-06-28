@@ -22,7 +22,7 @@ You will need:
    cd backend
    python -m venv venv # Run only once!
    source venv/bin/activate  # On Windows: venv\Scripts\activate
-   pip install -r requirements.txt # If you are on MacOS, remove the winkerberos line from requirements.txt before running this command.Add commentMore actions
+   pip install -r requirements.txt # If you are on MacOS, remove the winkerberos line from requirements.txt before running this command.
    ```
 
 3. **Configure MongoDB:**
