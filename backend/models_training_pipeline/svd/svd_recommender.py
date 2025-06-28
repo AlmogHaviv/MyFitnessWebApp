@@ -1,6 +1,40 @@
 import numpy as np
 from sklearn.decomposition import TruncatedSVD
 import joblib
+from sklearn.metrics import (
+    accuracy_score,
+    precision_score,
+    recall_score,
+    f1_score,
+    roc_auc_score
+)
+from sklearn.preprocessing import MinMaxScaler
+
+def ndcg_at_k_per_user(val_df, recommender, k):
+    user_groups = val_df.groupby("user_id")
+    ndcgs = []
+    for user_id, group in user_groups:
+        if user_id not in recommender.user_index:
+            continue
+        true_labels = []
+        pred_scores = []
+        for _, row in group.iterrows():
+            if row["buddy_id"] in recommender.buddy_index:
+                true_labels.append(1 if row["action"] == "like" else 0)
+                pred_scores.append(recommender.predict(user_id, row["buddy_id"]))
+        if len(true_labels) >= k:
+            y_true = np.array(true_labels)
+            y_scores = MinMaxScaler().fit_transform(np.array(pred_scores).reshape(-1, 1)).flatten()
+            order = np.argsort(y_scores)[::-1]
+            y_true_at_k = y_true[order[:k]]
+            ideal_sorted = np.sort(y_true_at_k)[::-1]
+            dcg = np.sum((2 ** y_true_at_k - 1) / np.log2(np.arange(2, 2 + len(y_true_at_k))))
+            ideal = np.sum((2 ** ideal_sorted - 1) / np.log2(np.arange(2, 2 + len(ideal_sorted))))
+            if ideal > 0:
+                ndcgs.append(dcg / ideal)
+    return np.mean(ndcgs) if ndcgs else 0.0
+
+
 
 class SVDRecommender:
     def __init__(self, n_components=20):
@@ -38,8 +72,38 @@ class SVDRecommender:
                 pred = self.predict(row["user_id"], row["buddy_id"])
                 y_pred.append(pred)
                 y_true.append(1 if row["action"] == "like" else 0)
-        mse = np.mean((np.array(y_true) - np.array(y_pred))**2)
-        return mse
+
+        y_true = np.array(y_true)
+        y_pred = np.array(y_pred)
+
+        # Normalize predictions to [0, 1]
+        scaler = MinMaxScaler()
+        y_pred_scaled = scaler.fit_transform(y_pred.reshape(-1, 1)).flatten()
+
+        # Threshold for binary prediction (you can tune this)
+        y_pred_binary = (y_pred_scaled >= 0.5).astype(int)
+
+        # Calculate metrics
+        mse = np.mean((y_true - y_pred_scaled) ** 2)
+        acc = accuracy_score(y_true, y_pred_binary)
+        precision = precision_score(y_true, y_pred_binary)
+        recall = recall_score(y_true, y_pred_binary)
+        f1 = f1_score(y_true, y_pred_binary)
+        roc_auc = roc_auc_score(y_true, y_pred_scaled)
+        ndcg_6 = ndcg_at_k_per_user(val_df, self, 6)
+        ndcg_10 = ndcg_at_k_per_user(val_df, self, 10)
+
+
+        return {
+            "mse": round(mse, 4),
+            "accuracy": round(acc, 4),
+            "precision": round(precision, 4),
+            "recall": round(recall, 4),
+            "f1_score": round(f1, 4),
+            "roc_auc": round(roc_auc, 4),
+            "ndcg@6": round(ndcg_6, 4),
+            "ndcg@10": round(ndcg_10, 4)
+        }
 
     def save(self, path="svd_model"):
         joblib.dump({

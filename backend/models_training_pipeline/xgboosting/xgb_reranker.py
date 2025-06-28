@@ -55,9 +55,9 @@ class XGBReranker:
             "scale_pos_weight": [1, 2, 5]  # useful if labels are imbalanced
         }
 
-        scoring = make_scorer(ndcg_at_k_score, needs_proba=True, k=10)
+        scoring = make_scorer(ndcg_at_k_score, greater_is_better=True, k=10)
         search = RandomizedSearchCV(
-            estimator=xgb.XGBClassifier(objective='binary:logistic', use_label_encoder=False, eval_metric='logloss'),
+            estimator=xgb.XGBClassifier(objective='binary:logistic', eval_metric='logloss'),
             param_distributions=param_dist,
             n_iter=n_iter,
             scoring=scoring,

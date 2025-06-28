@@ -4,6 +4,7 @@ from user_recommender import UserRecommender
 import random
 import os
 import time
+import traceback
 import numpy as np
 
 # Set up logging
@@ -13,8 +14,7 @@ logger = logging.getLogger(__name__)
 def train_and_save_model():
     """Train the recommender system, save the model, and find similar users."""
     try:
-        # # block of code to generate random names, bmi, vo2_max and body fat and id_numbers
-        # # Load the real data
+        # Load the real data
         df = pd.read_csv('data/workout_fitness_tracker_data.csv')
 
         # # Generate random names based on gender
@@ -119,7 +119,20 @@ def train_and_save_model():
         print(df['workout_intensity'].value_counts())
 
         print("\n=== Gender Distribution ===")
-        print(df['gender'].value_counts())
+        gender_counts = df['gender'].value_counts()
+        print(gender_counts)
+        
+        # Check if we have enough data for both groups
+        male_other_count = gender_counts.get('Male', 0) + gender_counts.get('Other', 0)
+        female_count = gender_counts.get('Female', 0)
+        
+        print(f"\nTraining data split:")
+        print(f"Male/Other users: {male_other_count}")
+        print(f"Female users: {female_count}")
+        
+        if male_other_count == 0 or female_count == 0:
+            logger.error("Not enough users in both gender groups for separate models!")
+            return
 
         print("\n=== Mood Before Workout Distribution ===")
         print(df['mood_before_workout'].value_counts())
@@ -131,13 +144,11 @@ def train_and_save_model():
         print("\n=== Correlation Matrix (Health Metrics) ===")
         print(df[['bmi', 'body_fat', 'VO2_max']].corr())
 
-
-
         logger.info("Initializing recommender system...")
         recommender = UserRecommender()
 
         # Training the model
-        logger.info("Training model...")
+        logger.info("Training model with separate gender groups...")
         # Get the absolute path to the project root directory
         csv_path = os.path.join('data', 'workout_fitness_tracker_data_updated.csv')
         recommender.train(csv_path)
@@ -146,15 +157,9 @@ def train_and_save_model():
         recommender.save_model()
         logger.info("Model training completed and saved successfully!")
 
-         # Load dataset
-        df = pd.read_csv('data/workout_fitness_tracker_data.csv')
-
-        # # Visualize clusters
-        # logger.info("Visualizing clusters...")
-        # df = pd.read_csv(csv_path)
-        # df_with_clusters = recommender.analyze_clusters(df)
-        # recommender.plot_box_by_cluster(df_with_clusters, feature='age')
-        # recommender.plot_clusters(df)
+        # Print model information
+        model_info = recommender.get_model_info()
+        logger.info(f"Model info: {model_info}")
 
         # Define a sample user profile for finding similar users
         user_profile = {
@@ -167,8 +172,8 @@ def train_and_save_model():
             'daily_calories_intake': 2500,
             'resting_heart_rate': 65,
             'VO2_max': 45,
-            'body_fat': 15,
-            'bmi': 40
+            'body_fat': 18,
+            'bmi': 22
         }
 
         # Finding similar users
@@ -179,19 +184,26 @@ def train_and_save_model():
             logger.warning("No similar users found.")
             return
 
-        # Get the user IDs of similar users (assuming indices map directly to user IDs)
+        # Get the user IDs of similar users
         logger.info(f"Distances: {distances}")
         logger.info(f"Indices of similar users: {id_numbers}")
 
         # Load the dataset and filter similar users
-        df = pd.read_csv('data/workout_fitness_tracker_data.csv')
+        df = pd.read_csv('data/workout_fitness_tracker_data_updated.csv')
         similar_users_data = df[df['id_number'].isin(id_numbers)]
 
         logger.info("Dataset for similar users:")
-        print(similar_users_data)
+        print(similar_users_data[['id_number', 'full_name', 'gender', 'age', 'bmi', 'VO2_max', 'body_fat']])
+        
+        # Show gender distribution in recommendations
+        gender_dist = similar_users_data['gender'].value_counts()
+        logger.info("Gender distribution in recommendations:")
+        for gender, count in gender_dist.items():
+            logger.info(f"{gender}: {count}")
 
     except Exception as e:
         logger.error(f"Error occurred: {e}")
+        traceback.print_exc()
         raise
 
 def test_loaded_model():
@@ -201,35 +213,77 @@ def test_loaded_model():
         test_recommender = UserRecommender()
         test_recommender.load_model()
         logger.info("Model loaded successfully!")
+        
+        # Print model info
+        model_info = test_recommender.get_model_info()
+        logger.info(f"Loaded model info: {model_info}")
+        
         df = pd.read_csv('data/workout_fitness_tracker_data_updated.csv')
+        test_recommender.raw_df = df  # Set raw_df for the loaded model
         test_recommender.explore_data(df, n_clusters=3)
 
-        # Test with the same user profile
-        test_profile = {
-            'age': 25,
-            'full_name': 'John Smith',
-            'id_number': 207298720,
-            'gender': 'Male',
-            'height': 180,
-            'weight': 70,
-            'daily_calories_intake': 2500,
-            'resting_heart_rate': 65,
-            'VO2_max': 45,
-            'body_fat': 15,
-            'bmi' : 23
-        }
+        # Test with multiple user profiles to verify balanced recommendations
+        test_profiles = [
+            {
+                'age': 25,
+                'full_name': 'John Smith',
+                'id_number': 207298720,
+                'gender': 'Male',
+                'height': 180,
+                'weight': 70,
+                'daily_calories_intake': 2500,
+                'resting_heart_rate': 65,
+                'VO2_max': 45,
+                'body_fat': 15,
+                'bmi': 23
+            },
+            {
+                'age': 30,
+                'full_name': 'Jane Doe',
+                'id_number': 207298721,
+                'gender': 'Female',
+                'height': 165,
+                'weight': 60,
+                'daily_calories_intake': 2200,
+                'resting_heart_rate': 70,
+                'VO2_max': 40,
+                'body_fat': 22,
+                'bmi': 22
+            },
+            {
+                'age': 35,
+                'full_name': 'Alex Johnson',
+                'id_number': 207298722,
+                'gender': 'Other',
+                'height': 175,
+                'weight': 75,
+                'daily_calories_intake': 2400,
+                'resting_heart_rate': 68,
+                'VO2_max': 42,
+                'body_fat': 20,
+                'bmi': 24
+            }
+        ]
 
-        logger.info("Testing inference with loaded model...")
-        distances, id_numbers = test_recommender.find_similar_users(test_profile, 15)
-        
-        logger.info("Model test results:")
-        logger.info(f"Found {len(distances)} similar users")
-        logger.info(f"Distances: {distances[:5]}")  # Show first 5 distances
-        logger.info(f"User IDs: {id_numbers[:5]}")  # Show first 5 IDs
+        for i, test_profile in enumerate(test_profiles):
+            logger.info(f"\nTesting inference with profile {i+1} ({test_profile['gender']})...")
+            distances, ids = test_recommender.find_similar_users(test_profile, k=10)
+
+            similar_users_data = df[df['id_number'].isin(ids)]
+
+            gender_counts = similar_users_data['gender'].value_counts()
+            logger.info("Gender distribution among similar users:")
+            for gender, count in gender_counts.items():
+                logger.info(f"{gender}: {count}")
+
+            logger.info("Model test results:")
+            logger.info(f"Found {len(distances)} similar users")
+            logger.info(f"Average distance: {np.mean(distances):.3f}")
         
         return True
 
     except Exception as e:
+        traceback.print_exc()
         logger.error(f"Error testing loaded model: {e}")
         return False
 
