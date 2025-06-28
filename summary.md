@@ -46,42 +46,109 @@ The architecture is modular, with separate routers for key functionalities, and 
 
 ### Algorithmic
 
-- **PyTorch** — for matrix factorization...
-- **scikit-learn** — for content-based recommendations...
-- ...
+### **Machine Learning Stack**
+- **scikit-learn** — K-Nearest Neighbors, SVD decomposition, preprocessing (StandardScaler, LabelEncoder)
+- **XGBoost** — Gradient boosting for recommendation reranking with hyperparameter optimization
+- **PyTorch** — Neural network implementation for matrix factorization
+- **NumPy/Pandas** — Data manipulation and numerical computations
 
-### Data Platforms
+### **Recommendation Pipeline**
+1. **Content-Based Filtering**: K-NN finds physiologically similar users
+2. **Collaborative Filtering**: SVD discovers latent preferences from interactions
+3. **Hybrid Reranking**: XGBoost combines multiple signals for optimal ranking
+4. **Contextual Enhancement**: Recent interaction history and workout type preferences
 
-- **MongoDB** — for storing and retriving real time suer interaction and data
+### **Evaluation Metrics**
+- **NDCG@K**: Normalized Discounted Cumulative Gain for ranking quality
+- **Precision/Recall**: Binary classification performance
+- **ROC-AUC**: Model discrimination ability
+- **F1-Score**: Balanced precision-recall measure
 
-### AI
+### **Data Processing**
+- **Feature Engineering**: BMI calculation, gender encoding, feature scaling
+- **Interaction Generation**: Synthetic user-buddy interactions using compatibility scoring
+- **Real-time Filtering**: Age range, gender, and workout type filtering
 
-- **Llama model** — for embedding items...
+## AI
+
+### **Large Language Models**
+- **Integration**: OpenRouter API for cost-effective access
+- **Applications**:
+  - Natural language query understanding
+  - Personalized workout video analysis
+  - Video content explanation generation
+
+### **Natural Language Processing**
+- **Query Processing**: Converts user fitness goals into optimized YouTube search queries
+- **Content Analysis**: Analyzes video titles, descriptions, and transcripts
+- **Explanation Generation**: Creates personalized workout explanations
+
+### **YouTube Integration**
+- **YouTube Data API v3** — Video search and metadata retrieval
+- **Transcript Analysis**: Automatic transcript extraction and processing
+- **Multi-language Support**: Handles videos with non-English transcripts
+
+### **AI-Powered Features**
+- **Smart Query Enhancement**: LLM improves user queries for better video discovery
+- **Contextual Recommendations**: Considers user profile and recent preferences
+- **Equipment Intelligence**: Automatically identifies required workout equipment
+- **Difficulty Assessment**: Analyzes workout complexity based on user fitness level
 
 &nbsp;<br>
 
 ## Main Algorithms
 
-A brief summary of the key algorithms and features developed:
+Our fitness buddy recommendation system implements a sophisticated multi-algorithm approach combining collaborative filtering, content-based filtering, and machine learning techniques:
 
-- **Collaborative filtering (SVD)** — solely based on like giving:
-mse: 0.4619
-accuracy: 0.2241
-precision: 0.2204
-recall: 0.9964
-f1_score: 0.3610
-roc_auc: 0.5460
-ndcg@6: 0.6579
-ndcg@10: 0.6070
-- **XGboost content base and Collaborative filtering** - based on interaction with 3 advences features: competability score, is_same_workout and last_liked_worlout giving amazing benchmarks:
-accuracy: 0.9064
-precision: 0.8831
-recall: 0.6635
-f1_score: 0.7577
-roc_auc: 0.9386
-ndcg@6: 0.8954
-ndcg@10: 0.9222
-- **Embedding model (OpenAI Model X)** — for feature 4 (help in bootstrapping new items)
+### 1. **K-Nearest Neighbors (K-NN) - Content-Based Filtering**
+- **Purpose**: Find similar users based on physiological and fitness characteristics
+- **Features**: Age, gender, height, weight, daily calories intake, resting heart rate, VO2_max, body fat, BMI
+- **Implementation**: Separate models for male/other and female users to ensure gender diversity
+- **Distance Metric**: Euclidean distance with feature weighting
+- **Output**: Top 6 similar fitness buddies
+
+### 2. **Singular Value Decomposition (SVD) - Collaborative Filtering**
+- **Purpose**: Matrix factorization to discover latent user-buddy preferences
+- **Components**: 20 latent factors for user and buddy embeddings
+- **Training**: Uses user-buddy interaction matrix (likes/dislikes)
+- **Performance**: 
+  - MSE: 0.4619
+  - Accuracy: 0.2241
+  - precision: 0.2204
+  - recall: 0.9964
+  - f1_score: 0.3610
+  - roc_auc: 0.5460
+  - NDCG@6: 0.6579
+  - NDCG@10: 0.6070
+- **Output**: Top 3 recommended buddies
+
+### 3. **XGBoost Reranker - Hybrid Approach**
+- **Purpose**: Rerank and optimize recommendations using advanced features
+- **Features**: 
+  - Compatibility score (workout type matching, physiological similarity)
+  - Same workout type indicator
+  - Last liked workout types (contextual preferences)
+  - User-buddy interaction patterns
+- **Hyperparameter Tuning**: RandomizedSearchCV with NDCG@10 optimization
+- **Performance**:
+  - Accuracy: 0.9064
+  - Precision: 0.8831
+  - Recall: 0.6635
+  - F1-Score: 0.7577
+  - ROC-AUC: 0.9386
+  - NDCG@6: 0.8954
+  - NDCG@10: 0.9222
+
+
+### 5. **LLM-Powered Workout Recommendations**
+- **Model**: meta-llama/llama-3.1-8b-instruct via OpenRouter API
+- **Purpose**: Generate personalized workout video recommendations
+- **Features**: 
+  - User profile analysis
+  - Natural language query processing
+  - YouTube video search and analysis
+  - Equipment requirement identification
+- **Output**: Curated workout videos with explanations and equipment lists
 
 &nbsp;<br>
 
