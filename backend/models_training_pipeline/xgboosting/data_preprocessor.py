@@ -116,7 +116,7 @@ class DataPreprocessor:
         user_row = user_data.copy()
         print(user_row)
         if user_row.empty:
-            raise ValueError(f"User ID {user_data["id_number"]} not found in raw data.")
+            raise ValueError(f"User ID {user_data['id_number']} not found in raw data.")
 
         buddy_rows = raw_data[raw_data["id_number"].isin(candidate_ids)].copy()
         if buddy_rows.empty:
