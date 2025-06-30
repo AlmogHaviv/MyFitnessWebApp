@@ -5,7 +5,7 @@ This web application is hosted on [Render](https://render.com) using the free ti
 You can try it out here:
 👉 [https://myfitnesswebapp-frontend.onrender.com](https://myfitnesswebapp-frontend.onrender.com)
 
-> **Tip:** Open the link above right away to start the backend warm-up process while you follow the setup steps below.
+> **Tip:** Open the link above right away to start the backend warm-up process. Meanwhile, if you'd like to test the app thoroughly or develop locally, follow the instructions in the local deployment guide below.
 
 ---
 
