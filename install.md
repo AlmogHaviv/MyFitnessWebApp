@@ -1,5 +1,19 @@
 # Installation Guide
 
+This web application is hosted on [Render](https://render.com) using the free tier. As such, the backend may take **2–3 minutes to become responsive** if it hasn't been used recently.
+
+You can try it out here:
+👉 [https://myfitnesswebapp-frontend.onrender.com](https://myfitnesswebapp-frontend.onrender.com)
+
+> **Tip:** Open the link above right away to start the backend warm-up process while you follow the setup steps below.
+
+---
+
+## Local Deployment
+
+If you'd like to run the application **locally**, follow the instructions in this guide. This setup allows you to develop, test, or customize the app on your own machine.
+
+
 ## Prerequisites
 
 You will need:
