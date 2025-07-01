@@ -23,7 +23,7 @@ More information can be found on the [Workshop Website](https://courses.cs.tau.a
 
 ### Authors
 
-- Almog Haviv - almoghaviv@mail.tau.com 
+- Almog Haviv - almoghaviv@mail.tau.ac.il 
 - Nir Anchel - niranchel@mail.tau.ac.il
 - Saar Molina - saarmolina@mail.tau.ac.il
 - Tal Cohen - tal9@mail.tau.ac.il
