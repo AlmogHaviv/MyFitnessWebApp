@@ -49,7 +49,7 @@ You will need:
 4. **Set up OpenRouter API (for LLM workout recommendations):**
    - Create a free account at [OpenRouter](https://openrouter.ai/)
    - Generate an API key from your OpenRouter dashboard
-   - Open `backend/models_training_pipeline/llm_workout_recs/llm_model_open_ai_api.py`
+   - Open [backend/models_training_pipeline/llm_workout_recs/llm_model_open_ai_api.py](backend/models_training_pipeline/llm_workout_recs/llm_model_open_ai_api.py)
    - Replace the dummy API key with your actual OpenRouter API key
    - **Important:** Never commit your API key to version control
 
