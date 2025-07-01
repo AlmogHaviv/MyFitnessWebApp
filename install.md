@@ -74,7 +74,10 @@ You will need:
 * **Full Functionality Verification:** 
   - Open [http://localhost:3000](http://localhost:3000) in your browser
   - Test user registration: Click "SIGNUP" and fill out the profile form
-  - Test user login: Use an existing ID number to log in
+  - Test user login: Use an existing ID number to log in  
+    **Example user IDs you can use to explore existing users:**  
+    `841188131`, `483406098`, `855496794`, `880279548`, `420346323`, `627652851`
+  - To test as a new user, simply create one via the signup page.
   - Test buddy recommendations: Like/dislike fitness buddies and view contact information
   - Test buddy recommendations: Change the filters and see you get the desired buddies
   - Test workout recommendations: Enter a fitness goal and receive personalized video recommendations
